@@ -3,6 +3,7 @@ var gutil  = require('gulp-util');
 var concat = require('gulp-concat');  
 var rename = require('gulp-rename');  
 var uglify = require('gulp-uglify');  
+var uglifyCss = require('gulp-uglifycss');
 var babel  = require('gulp-babel');
 var browserify = require('gulp-browserify');
 
@@ -12,59 +13,78 @@ dest.min        = {}
 //script paths
 var dependencies = [
                 //@ jquery
-                'dependencies/jquery.min.js'
-                ,'dependencies/jquery-migrate.min.js'
+                'dependencies/js/jquery.min.js'
+                ,'dependencies/js/jquery-migrate.min.js'
                 //@ angular and ui router
-                ,'dependencies/angular.min.js'
-                ,'dependencies/angular-ui-router.min.js'
+                ,'dependencies/js/angular.min.js'
+                ,'dependencies/js/angular-ui-router.min.js'
                 //@ angular charts
-                ,'dependencies/Chart.min.js'
-                ,'dependencies/angular-chart.min.js'
+                ,'dependencies/js/Chart.min.js'
+                ,'dependencies/js/angular-chart.min.js'
                 //@ crypto
-                ,'dependencies/crypto.js'
+                ,'dependencies/js/crypto.js'
                 //@ uikit and components
-                ,'dependencies/uikit.min.js'
-                ,'dependencies/notify.min.js'
+                ,'dependencies/js/uikit.min.js'
+                ,'dependencies/js/notify.min.js'
                 //@ ngStorage
-                ,'dependencies/ngStorage.min.js'
+                ,'dependencies/js/ngStorage.min.js'
                 //@ json-formatter
-                ,'dependencies/json-formatter.min.js'
+                ,'dependencies/js/json-formatter.min.js'
                 //@ framify-paginate
-                ,'dependencies/framify-paginate.js'
+                ,'dependencies/js/framify-paginate.js'
                 //@ date-formatter
-                ,'dependencies/date-formatter.min.js'
+                ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
-                ,'dependencies/socket.io.min.js'
+                ,'dependencies/js/socket.io.min.js'
                 ];
 
 var bundled = [
                 //@ jquery
-                'dependencies/jquery.min.js'
-                ,'dependencies/jquery-migrate.min.js'
+                'dependencies/js/jquery.min.js'
+                ,'dependencies/js/jquery-migrate.min.js'
                 //@ angular and ui router
-                ,'dependencies/angular.min.js'
-                ,'dependencies/angular-ui-router.min.js'
+                ,'dependencies/js/angular.min.js'
+                ,'dependencies/js/angular-ui-router.min.js'
                 //@ angular charts
-                ,'dependencies/Chart.min.js'
-                ,'dependencies/angular-chart.min.js'
+                ,'dependencies/js/Chart.min.js'
+                ,'dependencies/js/angular-chart.min.js'
                 //@ crypto
-                ,'dependencies/crypto.js'
+                ,'dependencies/js/crypto.js'
                 //@ uikit and components
-                ,'dependencies/uikit.min.js'
-                ,'dependencies/notify.min.js'
+                ,'dependencies/js/uikit.min.js'
+                ,'dependencies/js/notify.min.js'
                 //@ ngStorage
-                ,'dependencies/ngStorage.min.js'
+                ,'dependencies/js/ngStorage.min.js'
                 //@ json-formatter
-                ,'dependencies/json-formatter.min.js'
+                ,'dependencies/js/json-formatter.min.js'
                 //@ framify-paginate
-                ,'dependencies/framify-paginate.js'
+                ,'dependencies/js/framify-paginate.js'
                 //@ date-formatter
-                ,'dependencies/date-formatter.min.js'
+                ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
-                ,'dependencies/socket.io.min.js'
+                ,'dependencies/js/socket.io.min.js'
                 //@ framify.js
                 ,'framify.js'
                 ];
+
+var css     = [
+                //@UIKIT dependencies
+                'dependencies/css/uikit.min.css'
+                ,'dependencies/css/uikit.almost-flat.min.css'
+                ,'dependencies/css/main.min.css'    
+                //@ Chartist css
+                ,'dependencies/css/chartist.min.css'
+                //@ Font awesome
+                ,'dependencies/css/font-awesome.min.css'
+                //@ JSON formatter
+                ,'dependencies/css/json-formatter.min.css'
+                //@ Responsive Table
+                ,'dependencies/css/table-responsive.css'
+                //@ angular-chart 
+                ,'dependencies/css/angular-chart.min.css'
+                //@ angular-material
+                ,'dependencies/css/angular-material.min.css'
+                ]
 
 var Main_src   = ['framify.es6'];
 
@@ -112,7 +132,16 @@ gulp.task('minifyMain', function() {
 });
 
 
-gulp.task('build', ['minifyBundle','minifyDependencies','minifyMain']);
+gulp.task('cssMinify', function(){
+    return gulp.src( css )
+        .pipe(concat('framify_dependencies.css'))
+        .pipe(gulp.dest(dest.main))
+        .pipe(rename('framify_dependencies.min.css'))
+        .pipe(uglifyCss())
+        .pipe(gulp.dest(dest.min.main))
+})
+
+gulp.task('build', ['minifyBundle','minifyDependencies','minifyMain','cssMinify']);
 // gulp.task('build', ['bundle','dependencies','minifyDependencies']);
 
 gulp.task('default', ['build'])
