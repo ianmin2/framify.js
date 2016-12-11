@@ -1,10 +1,11 @@
-var gulp   = require('gulp');
-var gutil  = require('gulp-util');
-var concat = require('gulp-concat');  
-var rename = require('gulp-rename');  
-var uglify = require('gulp-uglify');  
-var uglifyCss = require('gulp-uglifycss');
-var babel  = require('gulp-babel');
+var gulp        = require('gulp');
+var gutil       = require('gulp-util');
+var concat      = require('gulp-concat');  
+var rename      = require('gulp-rename');  
+var uglify      = require('gulp-uglify');  
+var uglifyCss   = require('gulp-uglifycss');
+var sourcify    = require('gulp-sourcemaps');
+var babel       = require('gulp-babel');
 var browserify = require('gulp-browserify');
 
 var dest        = {};
@@ -13,21 +14,21 @@ dest.min        = {}
 //script paths
 var dependencies = [
                 //@ jquery
-                'dependencies/js/jquery.min.js'
-                ,'dependencies/js/jquery-migrate.min.js'
+                'dependencies/js/jquery.js'
+                ,'dependencies/js/jquery-migrate.js'
                 //@ angular and ui router
-                ,'dependencies/js/angular.min.js'
-                ,'dependencies/js/angular-ui-router.min.js'
+                ,'dependencies/js/angular.js'
+                ,'dependencies/js/angular-ui-router.js'
                 //@ angular charts
-                ,'dependencies/js/Chart.min.js'
-                ,'dependencies/js/angular-chart.min.js'
+                ,'dependencies/js/Chart.js'
+                ,'dependencies/js/angular-chart.js'
                 //@ crypto
                 ,'dependencies/js/crypto.js'
                 //@ uikit and components
                 ,'dependencies/js/uikit.min.js'
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
-                ,'dependencies/js/ngStorage.min.js'
+                ,'dependencies/js/ngStorage.js'
                 //@ json-formatter
                 ,'dependencies/js/json-formatter.min.js'
                 //@ framify-paginate
@@ -35,26 +36,26 @@ var dependencies = [
                 //@ date-formatter
                 ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
-                ,'dependencies/js/socket.io.min.js'
+                ,'dependencies/js/socket.io.js'
                 ];
 
 var bundled = [
                 //@ jquery
-                'dependencies/js/jquery.min.js'
-                ,'dependencies/js/jquery-migrate.min.js'
+                'dependencies/js/jquery.js'
+                ,'dependencies/js/jquery-migrate.js'
                 //@ angular and ui router
-                ,'dependencies/js/angular.min.js'
-                ,'dependencies/js/angular-ui-router.min.js'
+                ,'dependencies/js/angular.js'
+                ,'dependencies/js/angular-ui-router.js'
                 //@ angular charts
-                ,'dependencies/js/Chart.min.js'
-                ,'dependencies/js/angular-chart.min.js'
+                ,'dependencies/js/Chart.js'
+                ,'dependencies/js/angular-chart.js'
                 //@ crypto
                 ,'dependencies/js/crypto.js'
                 //@ uikit and components
                 ,'dependencies/js/uikit.min.js'
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
-                ,'dependencies/js/ngStorage.min.js'
+                ,'dependencies/js/ngStorage.js'
                 //@ json-formatter
                 ,'dependencies/js/json-formatter.min.js'
                 //@ framify-paginate
@@ -62,7 +63,7 @@ var bundled = [
                 //@ date-formatter
                 ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
-                ,'dependencies/js/socket.io.min.js'
+                ,'dependencies/js/socket.io.js'
                 //@ framify.js
                 ,'framify.js'
                 ];
@@ -98,12 +99,14 @@ dest.min.main           = 'dist'
 
 gulp.task('minifyDependencies', function() {  
     return gulp.src(dependencies)
-        // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) ) 
+        // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        .pipe(sourcify.init())
         .pipe(babel({ presets: ['es2015'] }))       
         .pipe(concat('framify_dependencies.js'))
         .pipe(gulp.dest(dest.dependencies))
         .pipe(rename('framify_dependencies.min.js'))
         .pipe(uglify())
+        .pipe(sourcify.write('maps'))
         .pipe(gulp.dest(dest.min.dependencies));
 });
 
@@ -111,11 +114,13 @@ gulp.task('minifyDependencies', function() {
 gulp.task('minifyBundle', function() {  
     return gulp.src(bundled)
         // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        .pipe(sourcify.init())
         .pipe(babel({ presets: ['es2015'] }))
         .pipe(concat('framify_bundled.js'))
         .pipe(gulp.dest(dest.bundled))
         .pipe(rename('framify_bundled.min.js'))
         .pipe(uglify())
+        .pipe(sourcify.write('maps'))
         .pipe(gulp.dest(dest.min.bundled));
 });
 
@@ -123,11 +128,13 @@ gulp.task('minifyBundle', function() {
 gulp.task('minifyMain', function() {  
     return gulp.src(Main_src)
         // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        .pipe(sourcify.init())
         .pipe(babel({ presets: ['es2015'] }))
         .pipe(concat('framify.js'))
         .pipe(gulp.dest(dest.main))
         .pipe(rename('framify.min.js'))
         .pipe(uglify())
+        .pipe(sourcify.write('maps'))
         .pipe(gulp.dest(dest.min.main));
 });
 
