@@ -3,7 +3,7 @@ var gutil  = require('gulp-util');
 var concat = require('gulp-concat');  
 var rename = require('gulp-rename');  
 var uglify = require('gulp-uglify');  
-// var babel  = require('gulp-babel');
+var babel  = require('gulp-babel');
 var browserify = require('gulp-browserify');
 
 var dest        = {};
@@ -66,6 +66,8 @@ var bundled = [
                 ,'framify.js'
                 ];
 
+var Main_src   = ['framify.es6'];
+
 dest.dependencies       = 'dist'
 dest.bundled            = 'dist'
 dest.main               = 'dist'
@@ -74,23 +76,10 @@ dest.min.bundled        = 'dist'
 dest.min.main           = 'dist'
 
 
-gulp.task('bundle', function() {  
-    return gulp.src(bundled)
-        .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
-        .pipe(concat('framify_bundled.js'))
-        .pipe(gulp.dest(dest.bundled));
-});
-
-gulp.task('dependencies', function() {  
-    return gulp.src(dependencies)
-        .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
-        .pipe(concat('framify_dependencies.js'))
-        .pipe(gulp.dest(dest.dependencies));
-});
-
 gulp.task('minifyDependencies', function() {  
     return gulp.src(dependencies)
-        .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) ) 
+        .pipe(babel({ presets: ['es2015'] }))       
         .pipe(concat('framify_dependencies.js'))
         .pipe(gulp.dest(dest.dependencies))
         .pipe(rename('framify_dependencies.min.js'))
@@ -101,7 +90,8 @@ gulp.task('minifyDependencies', function() {
 
 gulp.task('minifyBundle', function() {  
     return gulp.src(bundled)
-        .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        .pipe(babel({ presets: ['es2015'] }))
         .pipe(concat('framify_bundled.js'))
         .pipe(gulp.dest(dest.bundled))
         .pipe(rename('framify_bundled.min.js'))
@@ -111,16 +101,18 @@ gulp.task('minifyBundle', function() {
 
 
 gulp.task('minifyMain', function() {  
-    return gulp.src('framify.js')
-        .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
-        .pipe(concat('framify_.js'))
+    return gulp.src(Main_src)
+        // .pipe( browserify({ insertGlobals: true, debug: true }).on('error', gutil.log) )
+        .pipe(babel({ presets: ['es2015'] }))
+        .pipe(concat('framify.js'))
         .pipe(gulp.dest(dest.main))
         .pipe(rename('framify.min.js'))
         .pipe(uglify())
         .pipe(gulp.dest(dest.min.main));
 });
 
-// gulp.task('build', ['bundle','dependencies','minifyBundle','minifyDependencies','minifyMain']);
-gulp.task('build', ['bundle','dependencies','minifyDependencies']);
+
+gulp.task('build', ['minifyBundle','minifyDependencies','minifyMain']);
+// gulp.task('build', ['bundle','dependencies','minifyDependencies']);
 
 gulp.task('default', ['build'])
