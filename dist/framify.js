@@ -2,7 +2,7 @@
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jsonFormatter', 'chart.js']).service("app", ['$http', function ($http) {
+angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jsonFormatter', 'chart.js', 'ngAria', 'ngMaterial', 'ngMessages']).service("app", ['$http', function ($http) {
     var _this = this;
 
     //!SETUP THE APPLICATION BASICS
@@ -19,19 +19,58 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     this.nav = [];
 
-    //@ FETCH THE PRE-DEFINED APPLICATION URL
-    $http.get('config/app-routes.json').then(function (response) {
-        // console.dir(response)
-        if (response.status == 200) {
-            this.url = response.data;
+    // //@ FETCH THE PRE-DEFINED APPLICATION URL
+    // $http.get('config/app-routes.json')
+    // .then(function(response) {
+    //     // console.dir(response)
+    //     if (response.status == 200) {
+    //         this.url = response.data;
+    //     } else {
+    //         this.notify("Failed to set routes" ,"danger")
+    //     }
+    // });
+
+    //@Perform simple redirects
+    this.redirect = function (loc) {
+        if (loc) {
+            window.location = loc;
         } else {
-            this.notify("Failed to set routes", "danger");
+            window.location = "/";
         }
-    });
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the redirect function.");
+            console.dir(e);
+        });
+    };
 
     //!APPLICATION URL
     //this.url = "http://41.89.162.4:3000";
     this.url = this.hlink;
+
+    //* CONDITIONALLY TRANSFORM TO STRING
+    this.str = function (obj) {
+        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" ? JSON.stringify(obj) : obj;
+    };
+
+    //* CONDITIONALLY TRANSFORM TO JSON
+    this.json = function (obj) {
+        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" ? obj : JSON.parse(obj);
+    };
+
+    //* CONDITIONALLY RETURN AN MD5 HASH
+    this.md5 = function (str) {
+        return (/^[a-f0-9]{32}$/gm.test(str) ? str : CryptoJS.MD5(str).toString()
+        );
+    };
+
+    //BASE64 ENCODE A STRING
+    this.base64_encode = function (string) {
+        return CryptoJS.enc.Base64.parse(string);
+    };
+    //BASE64 DECODE A STRING
+    this.base64_decode = function (string) {
+        return CryptoJS.enc.Base64.stringify(string);
+    };
 
     //@ THE OFFICIAL FILE UPLOAD SERVICE
     this.upload = function (data, destination) {
@@ -59,6 +98,19 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         });
     };
 
+    //@ GET THE KEYS FROM AN OBJECT
+    this.keys = function (obj) {
+        return Object.keys(obj);
+    };
+
+    this.vals = function (obj) {
+        var vals = [];
+        Object.keys(obj).forEach(function (v) {
+            vals.push(obj[v]);
+        });
+        return vals;
+    };
+
     //@ CREATE A COPY OF AN OBJECT
     this.clone = function (obj) {
 
@@ -84,20 +136,33 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     //! EMPTY CALLBACK
     this.doNothing = function () {
-        return Promise.resolve();
+        return Promise.resolve().catch(function (e) {
+            console.log("Encountered an error when processing the donothing function.");
+            console.dir(e);
+        });
+    };
+
+    //@ FIND NUMBERS IN A STRING
+    this.getNumbers = function (str) {
+        var firstOnly = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+        var numMatch = /\d+/g;
+        return firstOnly ? str.toString().match(numMatch)[0] : str.toString().match(numMatch);
     };
 
     //! SET A NOTIFICATION 
-    this.notify = function (notificationContent, notificationClass, notificationTimeout) {
+    this.notify = function (notificationContent, notificationClass, notificationTimeout, position) {
 
         UIkit.notify({
-            message: notificationContent || 'A blank notification was triggered.',
+            message: '<center>' + (notificationContent || 'A blank notification was triggered.') + '</center>',
             status: notificationClass || 'info',
             timeout: notificationTimeout || 6000,
-            pos: 'top-center'
+            pos: 'top-center' || position
         });
 
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.dir(e);
+        });
     };
 
     var notify = this.notify;
@@ -136,6 +201,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     //* custom datetime
     this.dateTime = function () {
         return new Date().format('dateTime');
+    };
+    //* set the date in the custom datetime format
+    this.toDateTime = function (d) {
+        return new Date(d).format('dateTime');
     };
     //* month number
     this.monthNum = function () {
@@ -212,9 +281,15 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         UIkit.modal.alert('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Notice') + '</font>\n            <hr>\n            <center>' + (message || '</center><font color=red font-weight=bold; font-size=2em>Oops!</font><br>False alarm!<center>') + '</center>');
 
         if (cb && typeof cb == "function") {
-            return Promise.resolve(cb());
+            return Promise.resolve(cb()).catch(function (e) {
+                console.log("Encountered an error when processing the alert function.");
+                console.dir(e);
+            });
         } else {
-            return Promise.resolve(true);
+            return Promise.resolve(true).catch(function (e) {
+                console.log("Encountered an error when processing the alert2 function.");
+                console.dir(e);
+            });
         }
     };
 
@@ -283,7 +358,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     //*VALIDATE DATETIME VALUES IN THE FORMAT  DD-MM-YYYY HH:MM e.g 29-02-2013 22:16
     this.isdateTime = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-(19|20)[0-9]{2} (2[0-3]|[0-1][0-9]):[0-5][0-9]$/;
     this.isDateTime = function (prospective_date) {
-        return _this.isdate.test(prospective_date);
+        return _this.isdateTime.test(prospective_date);
     };
 
     //*VALIDATE WHETHER TWO GIVEN VALUES MATCH
@@ -342,22 +417,6 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         }
         return cnt;
     };
-
-    //* CONDITIONALLY TRANSFORM TO STRING
-    this.str = function (obj) {
-        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" ? JSON.stringify(obj) : obj;
-    };
-
-    //* CONDITIONALLY TRANSFORM TO JSON
-    this.json = function (obj) {
-        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" ? obj : JSON.parse(obj);
-    };
-
-    //* CONDITIONALLY RETURN AN MD5 HASH
-    this.md5 = function (str) {
-        return (/^[a-f0-9]{32}$/gm.test(str) ? str : CryptoJS.MD5(str).toString()
-        );
-    };
 }])
 
 //The BASIC sms sending application service
@@ -375,13 +434,16 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     //@ BASIC APPLICATION INITIALIZATION
     this.server = {};
     this.server.host = '41.89.162.252:3000';
-    this.socket = io.connect('http://' + this.server.host);
+    this.socket = io.connect('' + this.server.host);
     var socket = this.socket;
 
     //@ SEND EXPRESS SMS'
     this.SMS = function (smsData) {
         socket.emit("sendSMS", smsData);
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the sms function.");
+            console.dir(e);
+        });
     };
 
     //@ SEND A SINGLE SMS
@@ -399,7 +461,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         }
 
         socket.emit("sendSMS", obj);
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the sendsms function.");
+            console.dir(e);
+        });
     };
 
     //@ SEND BULK SMS MESSAGES
@@ -411,7 +476,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             //* Ensure that the API key has been set
             if (!apiKey) {
-                $scope.app.alert("<font style='weight:bold;color:red;'>ERROR</font>", '<center>Failed to instantiate the SMS sending service before api Key definition.</center>');
+                app.alert("<font style='weight:bold;color:red;'>ERROR</font>", '<center>Failed to instantiate the SMS sending service before api Key definition.</center>');
             } else if (Array.isArray(contacts)) {
 
                 //* handle an array of contacts
@@ -426,14 +491,14 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                         });
                     } else {
 
-                        $scope.app.alert("<font style='weight:bold;color:red;'>Invalid telephone number encountered</font>", '<center>Could not send an SMS message to the invalid number ' + element + '.</center>');
+                        app.alert("<font style='weight:bold;color:red;'>Invalid telephone number encountered</font>", '<center>Could not send an SMS message to the invalid number ' + element + '.</center>');
                     }
                 }, _this2);
 
                 socket.emit("sendSMS", obj);
                 resolve(true);
             } else {
-                $scope.app.alert("<font style='weight:bold;color:red;'>Bulk SMS error.</font>", '<center>You can only use the bulk SMS service with an array of telephone contacts</center>');
+                app.alert("<font style='weight:bold;color:red;'>Bulk SMS error.</font>", '<center>You can only use the bulk SMS service with an array of telephone contacts</center>');
             }
         });
     };
@@ -449,6 +514,15 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return $.ajax({
             method: "GET",
             url: "/php/index.php",
+            data: data
+        });
+    };
+
+    //Handle the posting of emails via the mailgun api
+    this.mail = function (data) {
+        return $.ajax({
+            method: "POST",
+            url: "/sendMail",
             data: data
         });
     };
@@ -519,7 +593,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     // $scope.urlParams = $stateParams;
 
     $rootScope.nav = [];
-    //$rootScope.nav.search; 
+    $rootScope.nav.search;
     $rootScope.links = [];
 
     $scope.nav.hasFilters = false;
@@ -590,7 +664,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -608,7 +684,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.data[table.toString().replace(/vw_/ig, '')] = {};
 
                     if (cb && typeof cb == "function") {
-                        resolve(cb(r));
+                        resolve(cb(r, data));
                     } else {
                         resolve(true);
                     }
@@ -630,7 +706,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     reject($scope.app.makeResponse(500, v[1]));
                 }
 
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -650,7 +726,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -667,7 +745,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     $scope.data[table.toString().replace(/vw_/ig, '')] = {};
 
-                    $scope.$apply();
+                    //$scope.$apply();
 
                     if (typeof cb == 'function') {
                         resolve(cb(r));
@@ -710,7 +788,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -721,7 +801,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                 if (r.response == 200) {
                     $scope.fetched[table] = r.data.message;
-                    $scope.$apply();
+                    //$scope.$apply();
                     resolve(r);
                 } else {
 
@@ -767,7 +847,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
         } else {
-            return Promise.resolve(do_fetch(table, data, cryptFields));
+            return Promise.resolve(do_fetch(table, data, cryptFields)).catch(function (e) {
+                console.log("Encountered an error when processing the fetch function.");
+                console.dir(e);
+            });
         }
     };
 
@@ -785,7 +868,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -813,7 +898,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.app.notify('<center>' + r.data.message + '</center>', "danger");
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -873,7 +958,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.app.notify('<center>' + r.data.message + '</center>', "danger");
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -881,7 +966,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     //Basic admin login
     $scope.adminLogin = function (cryptField) {
 
-        return new Promise(function () {
+        return new Promise(function (resolve, reject) {
 
             if (cryptField) {
                 $scope.data.admin[cryptField] = $scope.app.md5($scope.data.admin[cryptField]);
@@ -908,7 +993,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                             $scope.storage.admin._.user = r.data.message[0].admin_name;
                             $scope.storage.admin._.key = r.data.message[0].password;
                             $rootScope.frame.changeAdmin(true);
-                            $scope.$apply();
+                            //$scope.$apply();
                             resolve(r);
                         } else {
                             delete $scope.data.admin;
@@ -939,7 +1024,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.app.notify('<center>' + r.data.message + '</center>', "danger");
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -967,7 +1052,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         $scope.islogedin = false;
         delete $scope.storage.user;
         window.location = '/#/';
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the logout function.");
+            console.dir(e);
+        });
     };
 
     //@ Handle basic application redirection
@@ -977,7 +1065,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         } else {
             window.location = "/#/framify";
         }
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the redirect function.");
+            console.dir(e);
+        });
     };
 
     // Basic Admin Auth
@@ -992,7 +1083,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             $scope.location = "/#/admin";
         }
 
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the authorize function.");
+            console.dir(e);
+        });
     };
 
     //@ HANDLE ADMINISTRATOR DEAUTHORIZATION
@@ -1000,7 +1094,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         delete $scope.storage.admin;
         $rootScope.frame.changeAdmin(false);
         window.location = '/#/';
-        return Promise.resolve(true);
+        return Promise.resolve(true).catch(function (e) {
+            console.log("Encountered an error when processing the deauthorize function.");
+            console.dir(e);
+        });
     };
 
     // BASIC Custom Queries
@@ -1016,7 +1113,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -1031,7 +1130,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     $scope.cFetched[table] = r.data.message;
                     $scope.data[table.toString().replace(/vw_/ig, '')] = {};
-                    $scope.$apply();
+                    //$scope.$apply();
 
                     resolve(r);
                 } else {
@@ -1049,7 +1148,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.app.notify('<center>' + r.data.message + '</center>');
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -1067,7 +1166,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             //* Encrypt the specified cryptFields
             if (cryptFields) {
                 cryptFields.split(",").forEach(function (cryptField) {
-                    data[cryptField] = $scope.app.md5(data[cryptField]);
+                    if (data[cryptField]) {
+                        data[cryptField] = $scope.app.md5(data[cryptField]);
+                    }
                 });
             }
 
@@ -1081,7 +1182,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.counted[table.toString().replace(/vw_/ig, '')] = r.data.message;
                     $scope.data[table.toString().replace(/vw_/ig, '')] = {};
 
-                    $scope.$apply();
+                    //$scope.$apply();
 
                     resolve(r);
                 } else {
@@ -1098,7 +1199,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                     $scope.app.notify('<center>' + r.data.message + '</center>', 'danger');
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
-                $scope.$apply();
+                //$scope.$apply();
             });
         });
     };
@@ -1119,7 +1220,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             keys.split(",").forEach(function (key) {
                 delete data[key];
             });
-            return Promise.resolve(data);
+            return Promise.resolve(data).catch(function (e) {
+                console.log("Encountered an error when processing the sanitize function.");
+                console.dir(e);
+            });
         }
     };
 
@@ -1201,7 +1305,66 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // APPLICATION SPECIFIC ADDITIONS
+    // ADDITIONS ON PROBATION
+    // ----
+
+    //@ LOAD A SERVICE ONTO THE STAGE
+    $scope.service = {};
+    $scope.entity = {};
+
+    $scope.showService = function (serviceData) {
+        $scope.service.available = true;
+        $scope.service.current = serviceData;
+        //$scope.$apply();
+    };
+
+    $scope.showEntity = function (serviceData) {
+        $scope.entity.available = true;
+        $scope.entity.current = serviceData;
+        //$scope.$apply();
+    };
+
+    //@ Count my entities
+    $scope.howMany = function (table, data) {
+
+        var data = data || { owner: $scope.storage.user.username };
+        data = data ? $scope.app.json(data) : {};
+        data.table = table || 'entities';
+        data.command = "count";
+        data.token = {};
+
+        $scope.cgi.ajax(data).then(function (r) {
+
+            r = $scope.app.json(r);
+
+            if (r.response == 200) {
+
+                if (mess) {
+                    $scope.app.UID(UID, mess, "success");
+                }
+
+                $scope.counted[data.table.toString().replace(/vw_/ig, '')] = r.data.message;
+            } else {
+
+                //POSTGRESQL MATCHING
+                if (Array.isArray(r.data.message)) {
+                    var v = r.data.message[2].match(/DETAIL:(.*)/);
+                    if (v != undefined || v != null) {
+                        r.data.message = v[1];
+                    } else {
+                        r.data.message = r.data.message[2];
+                    }
+                } else {
+                    r.data.message;
+                }
+
+                alert('<center>' + r.data.message + '</center>');
+            }
+            //$scope.$apply();
+        });
+    };
+
+    // ----
 
 }]).directive("contenteditable", function () {
     return {
@@ -1222,4 +1385,12 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             });
         }
     };
-});
+})
+
+//!CONFIGURE THE BNASIC PRE-RUNTIME STATES OF THE APPLICATION
+.config(["ChartJsProvider", function (ChartJsProvider) {
+
+    //@SET THE DEFAULT CHART COLORS
+    ChartJsProvider.setOptions({ colors: ["#4AB151", '#387EF5', '#FF0000', '#DCDCDC', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'] });
+    // ChartJsProvider.setOptions({ colors : [ '#803690', '#00ADF9', '#DCDCDC', '#46BFBD', '#FDB45C', '#949FB1', '#4D5360'] });
+}]);

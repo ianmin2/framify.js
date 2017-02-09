@@ -15,7 +15,7 @@ dest.min        = {}
 var dependencies = [
                 //@ jquery
                 'dependencies/js/jquery.js'
-                ,'dependencies/js/jquery-migrate.js'
+                // ,'dependencies/js/jquery-migrate.js'
                 //@ angular and ui router
                 ,'dependencies/js/angular.js'
                 ,'dependencies/js/angular-ui-router.js'
@@ -25,7 +25,7 @@ var dependencies = [
                 //@ crypto
                 ,'dependencies/js/crypto.js'
                 //@ uikit and components
-                ,'dependencies/js/uikit.min.js'
+                // ,'dependencies/js/uikit.min.js'  -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
                 ,'dependencies/js/ngStorage.js'
@@ -37,12 +37,17 @@ var dependencies = [
                 ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
                 ,'dependencies/js/socket.io.js'
+                //@ aria,messages,material,animate
+                ,'dependencies/js/angular-aria.min.js'
+                ,'dependencies/js/angular-messages.min.js'
+                ,'dependencies/js/angular-material.min.js'
+                ,'dependencies/js/angular-animate.min.js'
                 ];
 
 var bundled = [
                 //@ jquery
-                'dependencies/js/jquery.js'
-                ,'dependencies/js/jquery-migrate.js'
+                ,'dependencies/js/jquery.js'
+                // ,'dependencies/js/jquery-migrate.js'
                 //@ angular and ui router
                 ,'dependencies/js/angular.js'
                 ,'dependencies/js/angular-ui-router.js'
@@ -52,7 +57,7 @@ var bundled = [
                 //@ crypto
                 ,'dependencies/js/crypto.js'
                 //@ uikit and components
-                ,'dependencies/js/uikit.min.js'
+                // ,'dependencies/js/uikit.min.js' -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
                 ,'dependencies/js/ngStorage.js'
@@ -65,7 +70,12 @@ var bundled = [
                 //@ socket.io
                 ,'dependencies/js/socket.io.js'
                 //@ framify.js
-                ,'framify.js'
+                ,'framify.es6'
+                //@ aria,messages,material,animate
+                ,'dependencies/js/angular-aria.min.js'
+                ,'dependencies/js/angular-messages.min.js'
+                ,'dependencies/js/angular-material.min.js'
+                ,'dependencies/js/angular-animate.min.js'               
                 ];
 
 var css     = [
@@ -73,6 +83,7 @@ var css     = [
                 'dependencies/css/uikit.min.css'
                 ,'dependencies/css/uikit.almost-flat.min.css'
                 ,'dependencies/css/main.min.css'    
+		        ,'dependencies/css/error_page.css'
                 //@ Chartist css
                 ,'dependencies/css/chartist.min.css'
                 //@ Font awesome
@@ -152,3 +163,8 @@ gulp.task('build', ['minifyBundle','minifyDependencies','minifyMain','cssMinify'
 // gulp.task('build', ['bundle','dependencies','minifyDependencies']);
 
 gulp.task('default', ['build'])
+gulp.task('package',['build'])
+gulp.task('pack',['build'])
+gulp.task('bundle',['minifyBundle'])
+gulp.task('main',['minifyMain'])
+gulp.task('dependencies',['minifydependencies'])
