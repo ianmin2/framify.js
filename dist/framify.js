@@ -203,8 +203,12 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return new Date().format('dateTime');
     };
     //* set the date in the custom datetime format
-    this.toDateTime = function (d) {
+    this.getDateTime = function (d) {
         return new Date(d).format('dateTime');
+    };
+    //* Convert a date to the dd-mm-yyyy hh:mm format
+    this.toDateTime = function (dObj) {
+        return dObj.format('dateTime');
     };
     //* month number
     this.monthNum = function () {
@@ -410,7 +414,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         var cnt = 0;
 
-        for (v in arrayObject) {
+        for (var v in arrayObject) {
             if (searchParam === arrayObject[v]) {
                 cnt += 1;
             }
@@ -513,7 +517,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     this.ajax = function (data) {
         return $.ajax({
             method: "GET",
-            url: "/php/index.php",
+            url: "/php",
             data: data
         });
     };
@@ -552,6 +556,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
     //p.split("/#/")[0]+"/#/"+p.split("/#/")[1].split("#")[0]
 
+    //@ INITIALIZE THE STORAGE ADMIN VARIABLE
+    $rootScope.storage.admin = {};
+
     //! RELOCATION HANDLING
     $rootScope.frame.relocate = function (loc) {
         console.log('Relocating to: #' + loc);
@@ -581,6 +588,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     $rootScope.frame.reset = function () {
         delete $rootScope.storage.admin;
         delete $rootScope.storage.user;
+        $rootScope.storage.admin = {};
+        $rootScope.storage.user = {};
         $rootScope.frame.changeAdmin(false);
         window.location = "/#/";
     };
@@ -615,6 +624,19 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     //@ FUNCTION EXECUTOR
     $rootScope.exec = function (f) {
         return f();
+    };
+
+    //@ VARIABLE SETTER
+    $rootScope.setVar = function (obj, keys, v) {
+
+        if (keys.length === 1) {
+            obj[keys[0]] = v;
+        } else {
+            var key = keys.shift();
+            obj[key] = $rootScope.setVar(typeof obj[key] === 'undefined' ? {} : obj[key], keys, v);
+        }
+
+        return obj;
     };
 
     /**
@@ -998,12 +1020,14 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                         } else {
                             delete $scope.data.admin;
                             delete $scope.storage.admin;
+                            $scope.storage.admin = {};
                             window.location = "/#/admin";
                             resolve(r);
                         }
                     } else {
                         delete $scope.data.admin;
                         delete $scope.storage.admin;
+                        $scope.storage.admin = {};
                         $scope.app.notify('<center>You have entered the wrong login credentials.</center>', "danger");
                         window.location = "/#/admin";
                         reject(false);
@@ -1021,6 +1045,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                         }
                     }
                     delete $scope.storage.admin;
+                    $scope.storage.admin = {};
                     $scope.app.notify('<center>' + r.data.message + '</center>', "danger");
                     reject($scope.app.makeResponse(500, r.data.message));
                 }
@@ -1339,8 +1364,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             if (r.response == 200) {
 
-                if (mess) {
-                    $scope.app.UID(UID, mess, "success");
+                if (r.data.message) {
+                    $scope.app.notify(r.data.message, "success");
                 }
 
                 $scope.counted[data.table.toString().replace(/vw_/ig, '')] = r.data.message;
