@@ -9,6 +9,7 @@ angular.module('framify.js', [
     ,'ngMessages'
 ])
 
+//@ Application running essentials
 .service("app"
 ,['$http'
 ,function($http) {
@@ -423,7 +424,7 @@ angular.module('framify.js', [
 
 }])
 
-//The BASIC sms sending application service
+//@ The BASIC sms sending application service
 .service("sms" 
 ,['app'
 ,function(app) {
@@ -524,6 +525,7 @@ angular.module('framify.js', [
 
 }])
 
+//@ The basic incomplete networking service
 .service("cgi" 
 ,[
 function() {
@@ -548,9 +550,93 @@ function() {
 
 }])
 
+//@@ The Authentication service ChartJsProvider.service('auth'
+.service('auth'
+,[ '$http','$localStorage'
+,function($http,$localStorage){
+
+   var auth = this;
+
+   auth.SetAuth     = function( AuthToken ){
+
+        return new Promise( function(resolve,reject){
+            
+            resolve( $http.defaults.headers.common.Authorization = AuthToken ||  ( $localStorage.framify_user ) ? $localStorage.framify_user.token : undefined );
+
+        });
+
+    };
+
+     //@ Perform User Registration
+    auth.Register  = function( credentials ){
+
+        return new Promise( function( resolve,reject ){
+
+            $http.post('/auth/register', credentials )
+            .success(function(response){
+
+                if( response.response == 200 ){
+
+                    resolve( response.data.message )
+
+                }else{
+
+                    reject( response.data.message )
+
+                }
+
+            })
+
+        });
+
+    };
+        
+    //@ Perform a User Login
+    auth.Login          = function( credentials ){
+
+        return new Promise( function( resolve,reject ){
+
+            $http.post('/auth/verify', credentials )
+            .success(function(response){
+
+                if( response.response == 200 ){
+
+                    $localStorage.framify_user   =  response.data.message ;
+
+                    auth.SetAuth( response.data.message.token );
+
+                    resolve( response.data.message )
+
+                }else{
+
+                    reject( response.data.message )
+
+                }
+
+            })
+
+        });
+
+    };
+        
+    //@ Perform A User Logout
+    auth.Logout         = function( ){
+
+        return new Promise( function(resolve,reject){
+
+            delete $localStorage.framify_user;
+            auth.SetAuth(undefined)
+            .then(resolve)
+
+        });                         
+
+    };
+
+}])
+
 .run(
-["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms"
-,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms) {
+["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms" ,"auth"
+,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms ,auth) {
 
         //! INJECT THE LOCATION SOURCE TO THE ROOT SCOPE
         $rootScope.location     = $state;
@@ -569,6 +655,9 @@ function() {
 
         //#! INJECT THE SMS INSTANCE INTO THE MAIN SCOPE
         $rootScope.sms          = sms;
+
+        //@ INJECT THE AUTHENTICATION SERVICE
+        $rootScope.auth         = auth;
 
         //! IDENTIFY THE CURRENT PATH
         $rootScope.frame.path   = () => $state.absUrl().split("/#/")[0] + "/#/" + $state.absUrl().split("/#/")[1].split("#")[0];
@@ -610,6 +699,8 @@ function() {
 
 
     }])
+
+//@ The main controller
 .controller("framifyController"
 ,['$scope' ,'$state' ,'$rootScope' 
 ,function($scope ,$state ,$rootScope) {
@@ -1164,7 +1255,7 @@ function() {
         // Basic Admin Auth
         $scope.authorize = () => {
 
-            if ($scope.storage.admin) {
+            if ($scope.storage.admin && $scope.data.admin.admin_name && $scope.data.admin.password) {
                 $scope.data.admin               = {};
                 $scope.data.admin.admin_name    = $scope.storage.admin.admin_name;
                 $scope.data.admin.password      = $scope.storage.admin.password;

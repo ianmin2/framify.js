@@ -50779,7 +50779,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jsonFormatter', 'chart.js', 'ngAria', 'ngMaterial', 'ngMessages']).service("app", ['$http', function ($http) {
+angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jsonFormatter', 'chart.js', 'ngAria', 'ngMaterial', 'ngMessages'])
+
+//@ Application running essentials
+.service("app", ['$http', function ($http) {
     var _this = this;
 
     //!SETUP THE APPLICATION BASICS
@@ -51200,7 +51203,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
 }])
 
-//The BASIC sms sending application service
+//@ The BASIC sms sending application service
 .service("sms", ['app', function (app) {
     var _this2 = this;
 
@@ -51288,7 +51291,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     // this.socket.on("trueSMS", (data) => {
     //     $scope.app.notify("The message has been conveyed.");
     // });
-}]).service("cgi", [function () {
+}])
+
+//@ The basic incomplete networking service
+.service("cgi", [function () {
 
     //Handle background calls to the web server for database integration
     this.ajax = function (data) {
@@ -51307,7 +51313,71 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             data: data
         });
     };
-}]).run(["app", "cgi", "$rootScope", "$state", "$localStorage", "sms", function (app, cgi, $rootScope, $state, $localStorage, sms) {
+}])
+
+//@@ The Authentication service ChartJsProvider.service('auth'
+.service('auth', ['$http', '$localStorage', function ($http, $localStorage) {
+
+    var auth = this;
+
+    auth.SetAuth = function (AuthToken) {
+
+        return new Promise(function (resolve, reject) {
+
+            resolve($http.defaults.headers.common.Authorization = AuthToken || $localStorage.framify_user ? $localStorage.framify_user.token : undefined);
+        });
+    };
+
+    //@ Perform User Registration
+    auth.Register = function (credentials) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.post('/auth/register', credentials).success(function (response) {
+
+                if (response.response == 200) {
+
+                    resolve(response.data.message);
+                } else {
+
+                    reject(response.data.message);
+                }
+            });
+        });
+    };
+
+    //@ Perform a User Login
+    auth.Login = function (credentials) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.post('/auth/verify', credentials).success(function (response) {
+
+                if (response.response == 200) {
+
+                    $localStorage.framify_user = response.data.message;
+
+                    auth.SetAuth(response.data.message.token);
+
+                    resolve(response.data.message);
+                } else {
+
+                    reject(response.data.message);
+                }
+            });
+        });
+    };
+
+    //@ Perform A User Logout
+    auth.Logout = function () {
+
+        return new Promise(function (resolve, reject) {
+
+            delete $localStorage.framify_user;
+            auth.SetAuth(undefined).then(resolve);
+        });
+    };
+}]).run(["app", "cgi", "$rootScope", "$state", "$localStorage", "sms", "auth", function (app, cgi, $rootScope, $state, $localStorage, sms, auth) {
 
     //! INJECT THE LOCATION SOURCE TO THE ROOT SCOPE
     $rootScope.location = $state;
@@ -51326,6 +51396,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     //#! INJECT THE SMS INSTANCE INTO THE MAIN SCOPE
     $rootScope.sms = sms;
+
+    //@ INJECT THE AUTHENTICATION SERVICE
+    $rootScope.auth = auth;
 
     //! IDENTIFY THE CURRENT PATH
     $rootScope.frame.path = function () {
@@ -51370,7 +51443,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         $rootScope.frame.changeAdmin(false);
         window.location = "/#/";
     };
-}]).controller("framifyController", ['$scope', '$state', '$rootScope', function ($scope, $state, $rootScope) {
+}])
+
+//@ The main controller
+.controller("framifyController", ['$scope', '$state', '$rootScope', function ($scope, $state, $rootScope) {
 
     //!APPLICATION GLOBAL SCOPE COMPONENTS
     $scope.current = {};
@@ -51876,7 +51952,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     // Basic Admin Auth
     $scope.authorize = function () {
 
-        if ($scope.storage.admin) {
+        if ($scope.storage.admin && $scope.data.admin.admin_name && $scope.data.admin.password) {
             $scope.data.admin = {};
             $scope.data.admin.admin_name = $scope.storage.admin.admin_name;
             $scope.data.admin.password = $scope.storage.admin.password;
