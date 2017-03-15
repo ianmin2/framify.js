@@ -46,6 +46,13 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         });
     };
 
+    this.setVar = function (obj, key, val) {
+
+        obj = obj || {};
+        obj[key] = val;
+        return obj;
+    };
+
     //!APPLICATION URL
     //this.url = "http://41.89.162.4:3000";
     this.url = this.hlink;
@@ -68,11 +75,11 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     //BASE64 ENCODE A STRING
     this.base64_encode = function (string) {
-        return CryptoJS.enc.Base64.parse(string);
+        return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(string));
     };
     //BASE64 DECODE A STRING
-    this.base64_decode = function (string) {
-        return CryptoJS.enc.Base64.stringify(string);
+    this.base64_decode = function (encoded) {
+        return CryptoJS.enc.Base64.parse(encoded).toString(CryptoJS.enc.Utf8);
     };
 
     //@ THE OFFICIAL FILE UPLOAD SERVICE
@@ -424,6 +431,51 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         }
         return cnt;
     };
+
+    //@ POST HTTP DATA HANDLER  
+    this.post = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.post(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ GET HTTP DATA HANDLER  
+    this.get = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.get(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ PUT HTTP DATA HANDLER 
+    this.put = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.put(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ JSONP HTTP DATA HANDLER 
+    this.jsonp = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.jsonp(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ DELETE HTTP DATA HANDLER 
+    this.delete = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.delete(destination, data).success(resolve).error(reject);
+        });
+    };
 }])
 
 //@ The BASIC sms sending application service
@@ -565,6 +617,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     reject(response.data.message);
                 }
+            }).error(function (response) {
+                reject(JSON.stringify((response ? response.data ? response.data.message : response : response) || "Could not obtain a response from the server."));
             });
         });
     };
@@ -587,6 +641,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     reject(response.data.message);
                 }
+            }).error(function (response) {
+                reject(JSON.stringify((response ? response.data ? response.data.message : response : response) || "Could not obtain a response from the server."));
             });
         });
     };

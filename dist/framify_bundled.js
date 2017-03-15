@@ -42764,6 +42764,120 @@ var CryptoJS = CryptoJS || function (o, q) {
       }
     } });j.MD5 = k._createHelper(p);j.HmacMD5 = k._createHmacHelper(p);
 })(Math);
+'use strict';
+
+/*
+CryptoJS v3.0.2
+code.google.com/p/crypto-js
+(c) 2009-2012 by Jeff Mott. All rights reserved.
+code.google.com/p/crypto-js/wiki/License
+*/
+(function () {
+    // Shortcuts
+    var C = CryptoJS;
+    var C_lib = C.lib;
+    var WordArray = C_lib.WordArray;
+    var C_enc = C.enc;
+
+    /**
+     * Base64 encoding strategy.
+     */
+    var Base64 = C_enc.Base64 = {
+        /**
+         * Converts a word array to a Base64 string.
+         *
+         * @param {WordArray} wordArray The word array.
+         *
+         * @return {string} The Base64 string.
+         *
+         * @static
+         *
+         * @example
+         *
+         *     var base64String = CryptoJS.enc.Base64.stringify(wordArray);
+         */
+        stringify: function stringify(wordArray) {
+            // Shortcuts
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var map = this._map;
+
+            // Clamp excess bits
+            wordArray.clamp();
+
+            // Convert
+            var base64Chars = [];
+            for (var i = 0; i < sigBytes; i += 3) {
+                var byte1 = words[i >>> 2] >>> 24 - i % 4 * 8 & 0xff;
+                var byte2 = words[i + 1 >>> 2] >>> 24 - (i + 1) % 4 * 8 & 0xff;
+                var byte3 = words[i + 2 >>> 2] >>> 24 - (i + 2) % 4 * 8 & 0xff;
+
+                var triplet = byte1 << 16 | byte2 << 8 | byte3;
+
+                for (var j = 0; j < 4 && i + j * 0.75 < sigBytes; j++) {
+                    base64Chars.push(map.charAt(triplet >>> 6 * (3 - j) & 0x3f));
+                }
+            }
+
+            // Add padding
+            var paddingChar = map.charAt(64);
+            if (paddingChar) {
+                while (base64Chars.length % 4) {
+                    base64Chars.push(paddingChar);
+                }
+            }
+
+            return base64Chars.join('');
+        },
+
+        /**
+         * Converts a Base64 string to a word array.
+         *
+         * @param {string} base64Str The Base64 string.
+         *
+         * @return {WordArray} The word array.
+         *
+         * @static
+         *
+         * @example
+         *
+         *     var wordArray = CryptoJS.enc.Base64.parse(base64String);
+         */
+        parse: function parse(base64Str) {
+            // Ignore whitespaces
+            base64Str = base64Str.replace(/\s/g, '');
+
+            // Shortcuts
+            var base64StrLength = base64Str.length;
+            var map = this._map;
+
+            // Ignore padding
+            var paddingChar = map.charAt(64);
+            if (paddingChar) {
+                var paddingIndex = base64Str.indexOf(paddingChar);
+                if (paddingIndex != -1) {
+                    base64StrLength = paddingIndex;
+                }
+            }
+
+            // Convert
+            var words = [];
+            var nBytes = 0;
+            for (var i = 0; i < base64StrLength; i++) {
+                if (i % 4) {
+                    var bitsHigh = map.indexOf(base64Str.charAt(i - 1)) << i % 4 * 2;
+                    var bitsLow = map.indexOf(base64Str.charAt(i)) >>> 6 - i % 4 * 2;
+                    words[nBytes >>> 2] |= (bitsHigh | bitsLow) << 24 - nBytes % 4 * 8;
+                    nBytes++;
+                }
+            }
+
+            return WordArray.create(words, nBytes);
+        },
+
+        _map: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+    };
+})();
 "use strict";
 
 /*! UIkit 2.27.2 | http://www.getuikit.com | (c) 2014 YOOtheme | MIT License */
@@ -50823,6 +50937,13 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         });
     };
 
+    this.setVar = function (obj, key, val) {
+
+        obj = obj || {};
+        obj[key] = val;
+        return obj;
+    };
+
     //!APPLICATION URL
     //this.url = "http://41.89.162.4:3000";
     this.url = this.hlink;
@@ -50845,11 +50966,11 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     //BASE64 ENCODE A STRING
     this.base64_encode = function (string) {
-        return CryptoJS.enc.Base64.parse(string);
+        return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(string));
     };
     //BASE64 DECODE A STRING
-    this.base64_decode = function (string) {
-        return CryptoJS.enc.Base64.stringify(string);
+    this.base64_decode = function (encoded) {
+        return CryptoJS.enc.Base64.parse(encoded).toString(CryptoJS.enc.Utf8);
     };
 
     //@ THE OFFICIAL FILE UPLOAD SERVICE
@@ -51201,6 +51322,51 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         }
         return cnt;
     };
+
+    //@ POST HTTP DATA HANDLER  
+    this.post = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.post(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ GET HTTP DATA HANDLER  
+    this.get = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.get(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ PUT HTTP DATA HANDLER 
+    this.put = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.put(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ JSONP HTTP DATA HANDLER 
+    this.jsonp = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.jsonp(destination, data).success(resolve).error(reject);
+        });
+    };
+
+    //@ DELETE HTTP DATA HANDLER 
+    this.delete = function (destination, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            $http.delete(destination, data).success(resolve).error(reject);
+        });
+    };
 }])
 
 //@ The BASIC sms sending application service
@@ -51342,6 +51508,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     reject(response.data.message);
                 }
+            }).error(function (response) {
+                reject(JSON.stringify((response ? response.data ? response.data.message : response : response) || "Could not obtain a response from the server."));
             });
         });
     };
@@ -51364,6 +51532,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                     reject(response.data.message);
                 }
+            }).error(function (response) {
+                reject(JSON.stringify((response ? response.data ? response.data.message : response : response) || "Could not obtain a response from the server."));
             });
         });
     };

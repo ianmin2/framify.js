@@ -51,6 +51,14 @@ angular.module('framify.js', [
             })
         };
 
+        this.setVar     = ( obj, key, val ) => {
+
+            obj         = obj || {};
+            obj[key]    = val;
+            return obj;
+
+        };
+
 
         //!APPLICATION URL
         //this.url = "http://41.89.162.4:3000";
@@ -66,9 +74,9 @@ angular.module('framify.js', [
         this.md5    = (str) => (/^[a-f0-9]{32}$/gm.test(str)) ? str : CryptoJS.MD5(str).toString();
 
         //BASE64 ENCODE A STRING
-        this.base64_encode = (string) => CryptoJS.enc.Base64.parse(string);
+        this.base64_encode = (string) => CryptoJS.enc.Base64.stringify( CryptoJS.enc.Utf8.parse(string) );
         //BASE64 DECODE A STRING
-        this.base64_decode = (string) => CryptoJS.enc.Base64.stringify(string);
+        this.base64_decode = (encoded) => (CryptoJS.enc.Base64.parse(encoded)).toString(CryptoJS.enc.Utf8);
 
         //@ THE OFFICIAL FILE UPLOAD SERVICE
         this.upload = (data, destination) => {
@@ -420,6 +428,75 @@ angular.module('framify.js', [
 
         };
 
+
+        //@ POST HTTP DATA HANDLER  
+        this.post   = ( destination, data ) => {
+
+            return new Promise( (resolve,reject) => {
+
+                $http.post(destination,data)
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        };
+
+        //@ GET HTTP DATA HANDLER  
+        this.get   = ( destination, data ) => {
+
+            return new Promise( (resolve,reject) => {
+
+                $http.get(destination,data)
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        };
+
+        //@ PUT HTTP DATA HANDLER 
+        this.put   = ( destination, data ) => {
+
+            return new Promise( (resolve,reject) => {
+
+                $http.put(destination,data)
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        }; 
+
+        //@ JSONP HTTP DATA HANDLER 
+        this.jsonp   = ( destination, data ) => {
+
+            return new Promise( (resolve,reject) => {
+
+                $http.jsonp(destination,data)
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        };
+
+        //@ DELETE HTTP DATA HANDLER 
+        this.delete   = ( destination, data ) => {
+
+            return new Promise( (resolve,reject) => {
+
+                $http.delete(destination,data)
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        };
+
+
+
+
        
 
 }])
@@ -586,6 +663,9 @@ function() {
                 }
 
             })
+            .error(function(response){
+                reject( JSON.stringify( ( ( response ) ? ( ( response.data )  ? response.data.message : response ) : response ) || "Could not obtain a response from the server.")  )
+            })
 
         });
 
@@ -613,6 +693,9 @@ function() {
 
                 }
 
+            })
+            .error(function(response){
+                reject( JSON.stringify( ( ( response ) ? ( ( response.data )  ? response.data.message : response ) : response ) || "Could not obtain a response from the server.")  )
             })
 
         });

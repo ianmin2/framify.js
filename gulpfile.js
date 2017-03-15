@@ -24,6 +24,7 @@ var dependencies = [
                 ,'dependencies/js/angular-chart.js'
                 //@ crypto
                 ,'dependencies/js/crypto.js'
+                ,'dependencies/js/enc-base64.js'                
                 //@ uikit and components
                 // ,'dependencies/js/uikit.min.js'  -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
@@ -56,6 +57,7 @@ var bundled = [
                 ,'dependencies/js/angular-chart.js'
                 //@ crypto
                 ,'dependencies/js/crypto.js'
+                ,'dependencies/js/enc-base64.js'                
                 //@ uikit and components
                 // ,'dependencies/js/uikit.min.js' -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
