@@ -864,6 +864,22 @@ function() {
         $rootScope.frame.changeAdmin(false);
         $scope.logedin = false;
 
+        //@ UNWANTED ANGULAR JS OBJECTS
+        $scope.unwanted    = ["$$hashKey","$index"];
+
+        $scope.removeUnwanted = function( insertObj ){
+             Object.keys( insertObj )
+             .forEach( insertKey => {
+                if( $scope.unwanted .indexOf( insertKey ) != -1 ){
+                    insertObj[insertKey] = undefined;
+                    delete insertObj[insertKey];
+                }
+            });
+            return insertObj;
+        };
+
+       
+        
         //! BASIC ADDITION
         $scope.add = (table ,data ,cryptFields ,cb) => {
 
@@ -887,7 +903,7 @@ function() {
                 }
 
                 //* Perform the actual addition
-                $scope.cgi.ajax(data)
+                $scope.cgi.ajax($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -960,7 +976,7 @@ function() {
                 }
 
                 //* perform the actual update
-                $scope.cgi.ajax(data)
+                $scope.cgi.ajax($scope.removeUnwanted(data))
                 .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1031,7 +1047,7 @@ function() {
                 }
 
                  //* perform the actual data fetching
-                 $scope.cgi.ajax(data)
+                 $scope.cgi.ajax($scope.removeUnwanted(data))
                  .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1112,7 +1128,7 @@ function() {
                     });
                 }
 
-                $scope.cgi.ajax(data)
+                $scope.cgi.ajax($scope.removeUnwanted(data))
                 .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1160,7 +1176,7 @@ function() {
                 $scope.data.login.extras    = " AND active is true LIMIT 1";
 
                 //* perform the actual login validation
-                $scope.cgi.ajax($scope.data.login)
+                $scope.cgi.ajax($scope.removeUnwanted($scope.data.login))
                 .then((r) => {
 
                     $scope.data.admin.extras = "";
@@ -1227,7 +1243,7 @@ function() {
                 $scope.data.admin.extras    = " AND active is true LIMIT 1";
 
                 //* perform the actual login
-                $scope.cgi.ajax($scope.data.admin)
+                $scope.cgi.ajax($scope.removeUnwanted($scope.data.admin) )
                 .then((r) => {
 
                     $scope.data.admin.extras = "";
@@ -1389,7 +1405,7 @@ function() {
                 }
 
                 //* Perform the actual custom query
-                $scope.cgi.ajax(data)
+                $scope.cgi.ajax($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -1448,7 +1464,7 @@ function() {
                 }
 
                 //* perform the actual count
-                $scope.cgi.ajax(data)
+                $scope.cgi.ajax($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -1577,8 +1593,8 @@ function() {
 
                 k.forEach((e, i) => {
 
-                    fg = ( !isNaN(extrasObj[e]) ) ? parseInt(extrasObj[e]) : extrasObj[e];
-                    extras += ' ' + e + "='" +  + "' AND";
+                    var fg = ( !isNaN(extrasObj[e]) ) ? parseInt(extrasObj[e]) : "'" + extrasObj[e] +"'";
+                    extras += ' ' + e + "=" + fg + " AND";
 
                 });
 
@@ -1624,7 +1640,7 @@ function() {
 		data.command    = "count";
 		data.token      =  {};
 
-		$scope.cgi.ajax( data )
+		$scope.cgi.ajax( $scope.removeUnwanted(data) )
 		.then( (r) => {   
 		    
 		    r = $scope.app.json(r);

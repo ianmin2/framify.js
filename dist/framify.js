@@ -803,6 +803,19 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     $rootScope.frame.changeAdmin(false);
     $scope.logedin = false;
 
+    //@ UNWANTED ANGULAR JS OBJECTS
+    $scope.unwanted = ["$$hashKey", "$index"];
+
+    $scope.removeUnwanted = function (insertObj) {
+        Object.keys(insertObj).forEach(function (insertKey) {
+            if ($scope.unwanted.indexOf(insertKey) != -1) {
+                insertObj[insertKey] = undefined;
+                delete insertObj[insertKey];
+            }
+        });
+        return insertObj;
+    };
+
     //! BASIC ADDITION
     $scope.add = function (table, data, cryptFields, cb) {
 
@@ -825,7 +838,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             }
 
             //* Perform the actual addition
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -887,7 +900,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             }
 
             //* perform the actual update
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -949,7 +962,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             }
 
             //* perform the actual data fetching
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -1028,7 +1041,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                 });
             }
 
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -1071,7 +1084,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             $scope.data.login.extras = " AND active is true LIMIT 1";
 
             //* perform the actual login validation
-            $scope.cgi.ajax($scope.data.login).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted($scope.data.login)).then(function (r) {
 
                 $scope.data.admin.extras = "";
 
@@ -1131,7 +1144,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             $scope.data.admin.extras = " AND active is true LIMIT 1";
 
             //* perform the actual login
-            $scope.cgi.ajax($scope.data.admin).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted($scope.data.admin)).then(function (r) {
 
                 $scope.data.admin.extras = "";
 
@@ -1277,7 +1290,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             }
 
             //* Perform the actual custom query
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -1330,7 +1343,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             }
 
             //* perform the actual count
-            $scope.cgi.ajax(data).then(function (r) {
+            $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
                 r = $scope.app.json(r);
 
@@ -1451,8 +1464,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             k.forEach(function (e, i) {
 
-                fg = !isNaN(extrasObj[e]) ? parseInt(extrasObj[e]) : extrasObj[e];
-                extras += ' ' + e + "='" + +"' AND";
+                var fg = !isNaN(extrasObj[e]) ? parseInt(extrasObj[e]) : "'" + extrasObj[e] + "'";
+                extras += ' ' + e + "=" + fg + " AND";
             });
 
             k = null;
@@ -1492,7 +1505,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         data.command = "count";
         data.token = {};
 
-        $scope.cgi.ajax(data).then(function (r) {
+        $scope.cgi.ajax($scope.removeUnwanted(data)).then(function (r) {
 
             r = $scope.app.json(r);
 
