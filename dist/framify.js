@@ -1400,6 +1400,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
 
     //@ INJECT A STANDARD WHERE "Extras" OBJECT
+    // addExtras(data.my_services,{username: storage.user.username},'username:WHERE owner','password,name,email,telephone,account_number,entity,active'),' ' )
     $scope.addExtras = function (targetObj, extrasObj, subStrings, removeKeys) {
 
         return new Promise(function (resolve, reject) {
@@ -1450,7 +1451,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             k.forEach(function (e, i) {
 
-                extras += ' ' + e + "='" + extrasObj[e] + "' AND";
+                fg = !isNaN(extrasObj[e]) ? parseInt(extrasObj[e]) : extrasObj[e];
+                extras += ' ' + e + "='" + +"' AND";
             });
 
             k = null;

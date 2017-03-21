@@ -1522,6 +1522,7 @@ function() {
         $scope.setMoin = (moin) => { $scope.currmoin = moin; }
 
         //@ INJECT A STANDARD WHERE "Extras" OBJECT
+        // addExtras(data.my_services,{username: storage.user.username},'username:WHERE owner','password,name,email,telephone,account_number,entity,active'),' ' )
         $scope.addExtras = (targetObj ,extrasObj ,subStrings ,removeKeys) => {
 
             return new Promise( (resolve,reject) => {
@@ -1576,7 +1577,8 @@ function() {
 
                 k.forEach((e, i) => {
 
-                    extras += ' ' + e + "='" + extrasObj[e] + "' AND";
+                    fg = ( !isNaN(extrasObj[e]) ) ? parseInt(extrasObj[e]) : extrasObj[e];
+                    extras += ' ' + e + "='" +  + "' AND";
 
                 });
 
@@ -1590,6 +1592,8 @@ function() {
             })
 
         };
+
+        
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // ADDITIONS ON PROBATION
