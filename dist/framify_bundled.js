@@ -51858,7 +51858,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                 r = $scope.app.json(r);
 
                 if (r.response == 200) {
-                    $scope.fetched[table] = r.data.message;
+                    $scope.$apply(function () {
+                        $scope.fetched[table] = r.data.message;
+                    });
                     //$scope.$apply();
                     resolve(r);
                 } else {
@@ -51937,8 +51939,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                 r = $scope.app.json(r);
 
                 if (r.response == 200) {
-                    // $scope.fetched[table].splice(delID, 1);
+                    // // $scope.fetched[table].splice(delID, 1);
                     $scope.app.notify('<center>' + r.data.message + '</center>', "success");
+                    $scope.fetch(table);
                     resolve(r);
                 } else {
 
@@ -52301,6 +52304,20 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     $scope.currmoin = $scope.app.monthNum();
     $scope.setMoin = function (moin) {
         $scope.currmoin = moin;
+    };
+
+    //@ DELETE UNWANTED PARAMETERS
+    $scope.delParams = function (mainObj, removeKeys) {
+
+        mainObj = mainObj || {};
+        removeKeys = removeKeys ? removeKeys.split(',') : [];
+
+        removeKeys.forEach(function (e) {
+            mainObj[e] = null;
+            delete mainObj[e];
+        });
+
+        return mainObj;
     };
 
     //@ INJECT A STANDARD WHERE "Extras" OBJECT

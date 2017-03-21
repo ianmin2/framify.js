@@ -1053,7 +1053,9 @@ function() {
                     r = $scope.app.json(r);
 
                     if (r.response == 200) {
-                        $scope.fetched[table] = r.data.message;
+                        $scope.$apply(function(){
+                            $scope.fetched[table] = r.data.message;
+                        })
                         //$scope.$apply();
                         resolve(r);
                     } else {
@@ -1134,8 +1136,9 @@ function() {
                     r = $scope.app.json(r);
 
                     if (r.response == 200) {
-                        // $scope.fetched[table].splice(delID, 1);
+                        // // $scope.fetched[table].splice(delID, 1);
                         $scope.app.notify(`<center>${r.data.message}</center>`, "success");
+                        $scope.fetch(table);
                         resolve(r);
                     } else {
 
@@ -1536,6 +1539,21 @@ function() {
          */
         $scope.currmoin = $scope.app.monthNum();
         $scope.setMoin = (moin) => { $scope.currmoin = moin; }
+
+        //@ DELETE UNWANTED PARAMETERS
+        $scope.delParams = function( mainObj,removeKeys ){
+
+            mainObj     = mainObj || {};
+            removeKeys  = ( removeKeys ) ? removeKeys.split(',') : [];
+
+            removeKeys.forEach(e => {
+                mainObj[e] = null;
+                delete mainObj[e];
+            });
+
+            return mainObj;
+
+        };
 
         //@ INJECT A STANDARD WHERE "Extras" OBJECT
         // addExtras(data.my_services,{username: storage.user.username},'username:WHERE owner','password,name,email,telephone,account_number,entity,active'),' ' )
