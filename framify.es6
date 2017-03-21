@@ -1543,7 +1543,7 @@ function() {
         //@ DELETE UNWANTED PARAMETERS
         $scope.delParams = function( mainObj,removeKeys ){
 
-            mainObj     = mainObj || {};
+            mainObj     = $scope.app.clone(mainObj) || {};
             removeKeys  = ( removeKeys ) ? removeKeys.split(',') : [];
 
             removeKeys.forEach(e => {
