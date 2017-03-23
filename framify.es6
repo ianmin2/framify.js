@@ -126,7 +126,7 @@ angular.module('framify.js', [
 
             //* clone all attributes of the parent object into a new object
             for (var attr in obj) {
-                if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+                if (obj.hasOwnProperty(attr)) copy[attr] = ( /^[0-9]+$/.test(obj[attr] ) )? parseInt(obj[attr]) : obj[attr] ;
             }
 
             //* return the newly created object
@@ -627,7 +627,7 @@ function() {
 
 }])
 
-//@@ The Authentication service ChartJsProvider.service('auth'
+//@@ The Authentication service
 .service('auth'
 ,[ '$http','$localStorage'
 ,function($http,$localStorage){
@@ -717,9 +717,109 @@ function() {
 
 }])
 
+
+//@@ The Remote authentication service
+//@@ The Authentication service ChartJsProvider.service('auth'
+.service('remoteAuth'
+,[ '$http','$localStorage'
+,function($http,$localStorage){
+
+   var auth = this;
+
+   auth.url         = 'http://127.0.0.1:3000'
+
+   auth.setUrl      = function( accessUrl ){
+        auth.url    = accessUrl;
+        console.log(`The remote access url has been set to ${accessUrl}` );
+   }
+
+   auth.SetAuth     = function( AuthToken ){
+
+        return new Promise( function(resolve,reject){
+            
+            resolve( $http.defaults.headers.common.Authorization = AuthToken ||  ( $localStorage.framify_user ) ? $localStorage.framify_user.token : undefined );
+
+        });
+
+    };
+
+     //@ Perform User Registration
+    auth.Register  = function( credentials ){
+
+        return new Promise( function( resolve,reject ){
+
+            $http.post(`${auth.url}/auth/register`, credentials )
+            .success(function(response){
+
+                if( response.response == 200 ){
+
+                    resolve( response.data.message )
+
+                }else{
+
+                    reject( response.data.message )
+
+                }
+
+            })
+            .error(function(response){
+                reject( JSON.stringify( ( ( response ) ? ( ( response.data )  ? response.data.message : response ) : response ) || "Could not obtain a response from the server.")  )
+            })
+
+        });
+
+    };
+        
+    //@ Perform a User Login
+    auth.Login          = function( credentials ){
+
+        return new Promise( function( resolve,reject ){
+
+            $http.post(`${auth.url}/auth/verify`, credentials )
+            .success(function(response){
+
+                if( response.response == 200 ){
+
+                    $localStorage.framify_user   =  response.data.message ;
+
+                    auth.SetAuth( response.data.message.token );
+
+                    resolve( response.data.message )
+
+                }else{
+
+                    reject( response.data.message )
+
+                }
+
+            })
+            .error(function(response){
+                reject( JSON.stringify( ( ( response ) ? ( ( response.data )  ? response.data.message : response ) : response ) || "Could not obtain a response from the server.")  )
+            })
+
+        });
+
+    };
+        
+    //@ Perform A User Logout
+    auth.Logout         = function( ){
+
+        return new Promise( function(resolve,reject){
+
+            delete $localStorage.framify_user;
+            auth.SetAuth(undefined)
+            .then(resolve)
+
+        });                         
+
+    };
+
+}]) 
+
+
 .run(
-["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms" ,"auth"
-,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms ,auth) {
+["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms" ,"auth","remoteAuth"
+,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms ,auth, remoteAuth) {
 
         //! INJECT THE LOCATION SOURCE TO THE ROOT SCOPE
         $rootScope.location     = $state;
@@ -741,6 +841,7 @@ function() {
 
         //@ INJECT THE AUTHENTICATION SERVICE
         $rootScope.auth         = auth;
+        $rootScope.remoteAuth   = remoteAuth;
 
         //! IDENTIFY THE CURRENT PATH
         $rootScope.frame.path   = () => $state.absUrl().split("/#/")[0] + "/#/" + $state.absUrl().split("/#/")[1].split("#")[0];
@@ -783,10 +884,12 @@ function() {
 
     }])
 
+
+
 //@ The main controller
 .controller("framifyController"
-,['$scope' ,'$state' ,'$rootScope' 
-,function($scope ,$state ,$rootScope) {
+,['$scope' ,'$state' ,'$rootScope','$http' 
+,function($scope ,$state ,$rootScope ,$http) {
 
         //!APPLICATION GLOBAL SCOPE COMPONENTS
         $scope.current = {};
@@ -1542,8 +1645,8 @@ function() {
 
         //@ DELETE UNWANTED PARAMETERS
         $scope.delParams = function( mainObj,removeKeys ){
-
-            mainObj     = $scope.app.clone(mainObj) || {};
+            // $scope.app.clone
+            mainObj     = (mainObj) || {};
             removeKeys  = ( removeKeys ) ? removeKeys.split(',') : [];
 
             removeKeys.forEach(e => {
@@ -1694,6 +1797,112 @@ function() {
 	    };
 
 	// ----
+
+    //@ FRAMIFY HANDLERS
+
+    $scope.data.login       = $scope.data.login || {};
+
+    $scope.data.me          = $scope.data.me || {};
+
+    $scope.setData;
+
+    //@ Initialize the handlers object
+    $scope.handlers = {};
+
+    //@ The registration success handler
+    $scope.handlers.regSuccess = function( message ){
+        $scope.app.notify("You have been successfully registered");
+        $state.go("app.login");
+    };
+
+    //@ The successful login handler
+    $scope.handlers.loginSuccess = function( message ){
+        $scope.app.notify("<i class='fa fa-2x fa-spin fa-circle-o-notch'></i> Processing your login data",'success',4000); 
+        $state.go("app.panel");    
+    };
+
+    //@ The registration error handler
+    $scope.handlers.regError   = function( message ){
+        $scope.app.alert("<font color='red'>Signup Error</font>", message);
+    };
+
+    //@ The login error handler
+    $scope.handlers.loginError   = function( message ){
+        $scope.app.alert("<font color='red'>Login Error</font>", message);
+    };    
+ 
+     //@ The identity check verification handler
+    $scope.handlers.identity    = function(){
+
+        return new Promise(function(reject,resolve){
+            
+            $http.get("/auth/me")
+            .success(function(response){
+               
+               resolve( $scope.data.me = response.data.message  );
+
+            })
+            .error(function(error){
+
+                $scope.auth.Logout()
+                .then(function(){
+
+                    $scope.app.notify("<i class='fa  fa-exclamation-triangle'></i>&nbsp;&nbsp;Your lease has expired <br>Please Login to continue.",'danger');
+                    reject( $state.go("app.login") );
+
+                });
+
+            })
+
+        })
+
+    };
+
+    //@ The login status check handler
+    $scope.handlers.isLogedIn   = function(){
+
+        return new Promise( function(resolve, reject ){
+
+            if( !$scope.storage.framify_user ){
+
+
+                if($state.current.name != "app.login" ){
+
+                    $scope.app.notify("<i class='fa  fa-exclamation-triangle'></i>&nbsp;&nbsp;Please Login to continue.",'danger');
+                    reject( $state.go("app.login") );                    
+
+                }
+                
+            }else if( !$http.defaults.headers.common.Authorization || $http.defaults.headers.common.Authorization == undefined || $http.defaults.headers.common.Authorization == '' ){
+
+                    $scope.auth.SetAuth( undefined )
+                    .then(function(  ){
+
+                        if($state.current.name == "app.login" ){
+                            resolve( $state.go("app.panel") );
+                        }else{
+                            resolve(  );
+                        }
+                        
+                    })
+
+                     
+                    
+
+            }else{
+
+                if($state.current.name == "app.login" ){
+                   resolve( $state.go("app.panel") );
+                }else{
+                    resolve(  );
+                }
+
+            }
+
+
+        })
+
+    };
 
 
 }])
