@@ -1735,7 +1735,21 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             });
         }
     };
-})
+}).directive('fileModel', ['$parse', function ($parse) {
+
+    return {
+        restrict: "A",
+        link: function link(scope, element, attr) {
+            var model = $parse(attr.fileModel);
+            var modelSetter = model.assign;
+            element.bind('change', function () {
+                scope.$apply(function () {
+                    modelSetter(scope, element[0].files[0]);
+                });
+            });
+        }
+    };
+}])
 
 //!CONFIGURE THE BNASIC PRE-RUNTIME STATES OF THE APPLICATION
 .config(["ChartJsProvider", function (ChartJsProvider) {
