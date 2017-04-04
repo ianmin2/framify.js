@@ -51935,10 +51935,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
                 r = $scope.app.json(r);
 
                 if (r.response == 200) {
-                    $scope.$apply(function () {
-                        $scope.fetched[table] = r.data.message;
-                    });
-                    //$scope.$apply();
+                    $scope.fetched[table] = r.data.message;
+                    $scope.$apply();
                     resolve(r);
                 } else {
 
