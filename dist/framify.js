@@ -329,9 +329,9 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             UIkit.modal.prompt('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Info required') + '</font>\n            <hr>\n            ' + (label || 'email') + ' :', placeholder || '', function (userValue) {
                 if (cb && typeof cb == "function") {
-                    resolve(cb());
+                    resolve(cb(userValue));
                 } else {
-                    resolve(true);
+                    resolve(userValue);
                 }
             });
         });
@@ -664,11 +664,16 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     var auth = this;
 
-    auth.url = 'http://127.0.0.1:3000';
+    auth.url = 'http://bixbyte.io';
 
     auth.setUrl = function (accessUrl) {
-        auth.url = accessUrl;
-        console.log('The remote access url has been set to ' + accessUrl);
+
+        return new Promise(function (resolve, reject) {
+
+            auth.url = accessUrl;
+            console.log('The remote access url has been set to ' + accessUrl);
+            resolve(accessUrl);
+        });
     };
 
     auth.SetAuth = function (AuthToken) {
@@ -1640,28 +1645,33 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
     //@ Initialize the handlers object
     $scope.handlers = {};
+    $scope.r_handlers = $scope.handlers;
 
     //@ The registration success handler
     $scope.handlers.regSuccess = function (message) {
         $scope.app.notify("You have been successfully registered");
         $state.go("app.login");
     };
+    $scope.r_handlers.regSuccess = $scope.handlers.regSuccess;
 
     //@ The successful login handler
     $scope.handlers.loginSuccess = function (message) {
         $scope.app.notify("<i class='fa fa-2x fa-spin fa-circle-o-notch'></i> Processing your login data", 'success', 4000);
         $state.go("app.panel");
     };
+    $scope.r_handlers.loginSuccess = $scope.handlers.loginSuccess;
 
     //@ The registration error handler
     $scope.handlers.regError = function (message) {
         $scope.app.alert("<font color='red'>Signup Error</font>", message);
     };
+    $scope.r_handlers.regError = $scope.handlers.regError;
 
     //@ The login error handler
     $scope.handlers.loginError = function (message) {
         $scope.app.alert("<font color='red'>Login Error</font>", message);
     };
+    $scope.r_handlers.loginError = $scope.handlers.loginError;
 
     //@ The identity check verification handler
     $scope.handlers.identity = function () {
@@ -1669,6 +1679,24 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return new Promise(function (reject, resolve) {
 
             $http.get("/auth/me").success(function (response) {
+
+                resolve($scope.data.me = response.data.message);
+            }).error(function (error) {
+
+                $scope.auth.Logout().then(function () {
+
+                    $scope.app.notify("<i class='fa  fa-exclamation-triangle'></i>&nbsp;&nbsp;Your lease has expired <br>Please Login to continue.", 'danger');
+                    reject($state.go("app.login"));
+                });
+            });
+        });
+    };
+
+    $scope.r_handlers.identity = function () {
+
+        return new Promise(function (reject, resolve) {
+
+            $http.get($scope.remoteAuth.url + '/auth/me').success(function (response) {
 
                 resolve($scope.data.me = response.data.message);
             }).error(function (error) {
@@ -1697,6 +1725,38 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             } else if (!$http.defaults.headers.common.Authorization || $http.defaults.headers.common.Authorization == undefined || $http.defaults.headers.common.Authorization == '') {
 
                 $scope.auth.SetAuth(undefined).then(function () {
+
+                    if ($state.current.name == "app.login") {
+                        resolve($state.go("app.panel"));
+                    } else {
+                        resolve();
+                    }
+                });
+            } else {
+
+                if ($state.current.name == "app.login") {
+                    resolve($state.go("app.panel"));
+                } else {
+                    resolve();
+                }
+            }
+        });
+    };
+
+    $scope.r_handlers.isLogedIn = function () {
+
+        return new Promise(function (resolve, reject) {
+
+            if (!$scope.storage.framify_user) {
+
+                if ($state.current.name != "app.login") {
+
+                    $scope.app.notify("<i class='fa  fa-exclamation-triangle'></i>&nbsp;&nbsp;Please Login to continue.", 'danger');
+                    reject($state.go("app.login"));
+                }
+            } else if (!$http.defaults.headers.common.Authorization || $http.defaults.headers.common.Authorization == undefined || $http.defaults.headers.common.Authorization == '') {
+
+                $scope.remoteAuth.SetAuth(undefined).then(function () {
 
                     if ($state.current.name == "app.login") {
                         resolve($state.go("app.panel"));
