@@ -43,12 +43,11 @@ var dependencies = [
                 ,'dependencies/js/angular-messages.min.js'
                 ,'dependencies/js/angular-material.min.js'
                 ,'dependencies/js/angular-animate.min.js'
-                ,'dependencies/js/adminbsb/**' 
                 ];
 
 var bundled = [
-               //@ jquery
-                'dependencies/js/jquery.js'
+                //@ jquery
+                ,'dependencies/js/jquery.js'
                 // ,'dependencies/js/jquery-migrate.js'
                 //@ angular and ui router
                 ,'dependencies/js/angular.js'
@@ -60,7 +59,7 @@ var bundled = [
                 ,'dependencies/js/crypto.js'
                 ,'dependencies/js/enc-base64.js'                
                 //@ uikit and components
-                // ,'dependencies/js/uikit.min.js'  -- useless DO NOT IMPORT
+                // ,'dependencies/js/uikit.min.js' -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
                 ,'dependencies/js/ngStorage.js'
@@ -72,20 +71,23 @@ var bundled = [
                 ,'dependencies/js/date-formatter.min.js'
                 //@ socket.io
                 ,'dependencies/js/socket.io.js'
+                //@ framify.js
+                ,'framify.es6'
                 //@ aria,messages,material,animate
                 ,'dependencies/js/angular-aria.min.js'
                 ,'dependencies/js/angular-messages.min.js'
                 ,'dependencies/js/angular-material.min.js'
-                ,'dependencies/js/angular-animate.min.js'      
-                ,'dependencies/js/adminbsb/**'      
+                ,'dependencies/js/angular-animate.min.js'               
                 ];
 
 var css     = [
                 //@UIKIT dependencies
                 'dependencies/css/uikit.min.css'
                 ,'dependencies/css/uikit.almost-flat.min.css'
+                ,'dependencies/css/main.min.css'    
+		        ,'dependencies/css/error_page.css'
                 //@ Chartist css
-                // ,'dependencies/css/chartist.min.css'
+                ,'dependencies/css/chartist.min.css'
                 //@ Font awesome
                 ,'dependencies/css/font-awesome.min.css'
                 //@ JSON formatter
@@ -96,7 +98,6 @@ var css     = [
                 ,'dependencies/css/angular-chart.min.css'
                 //@ angular-material
                 ,'dependencies/css/angular-material.min.css'
-                ,'dependencies/css/adminbsb/**'
                 ]
 
 var Main_src   = ['framify.es6'];
