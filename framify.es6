@@ -26,20 +26,13 @@ angular.module('framify.js', [
         this.port   = url[0].split(':')[1];
         this.hlink  = `${this.scheme}//${this.ip}${( ( this.port != undefined ) ? ":" + this.port : "" )}`;
 
+        //!APPLICATION URL
+        //this.url = "http://41.89.162.4:3000";
+        this.url = this.hlink;
+
         var hlink = this.hlink;
-
+        
         this.nav = [];
-
-        // //@ FETCH THE PRE-DEFINED APPLICATION URL
-        // $http.get('config/app-routes.json')
-        // .then(function(response) {
-        //     // console.dir(response)
-        //     if (response.status == 200) {
-        //         this.url = response.data;
-        //     } else {
-        //         this.notify("Failed to set routes" ,"danger")
-        //     }
-        // });
 
         //@Perform simple redirects
         this.redirect = (loc) => {
@@ -64,11 +57,7 @@ angular.module('framify.js', [
         };
 
 
-        //!APPLICATION URL
-        //this.url = "http://41.89.162.4:3000";
-        this.url = this.hlink;
-
-         //* CONDITIONALLY TRANSFORM TO STRING
+        //* CONDITIONALLY TRANSFORM TO STRING
         this.str    = (obj) => (typeof(obj) === "object") ? JSON.stringify(obj) : obj;
 
         //* CONDITIONALLY TRANSFORM TO JSON
@@ -191,8 +180,11 @@ angular.module('framify.js', [
             };
 
         };
+        this.make_response  = this.makeResponse;
 
         //!DATE FORMATERS
+        //* date object     
+        this.date           = () => new Date();
         //* simple date
         this.newDate        = () => new Date().toDateString();
         //* isodate
