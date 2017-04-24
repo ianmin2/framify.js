@@ -14,13 +14,17 @@ angular.module('framify.js', [
 ,['$http'
 ,function($http) {
 
+        var app = this;
+
         //!SETUP THE APPLICATION BASICS
         var url = window.location.href.split('/').filter(function(urlPortion) { return (urlPortion != '' && urlPortion != 'http:' && urlPortion != 'https:') });
-
+        let pathPos = window.location.href.split('/').filter(function(urlPortion) { return (urlPortion != '' ) });
+        
         //! APP CONFIGURATIONS
-        this.ip = url[0].split(':')[0];
-        this.port = url[0].split(':')[1];
-        this.hlink = "http://" + this.ip + ":" + this.port;
+        this.scheme = pathPos[0];
+        this.ip     = url[0].split(':')[0];
+        this.port   = url[0].split(':')[1];
+        this.hlink  = `${this.scheme}//${this.ip}${( ( this.port != undefined ) ? ":" + this.port : "" )}`;
 
         var hlink = this.hlink;
 
@@ -494,6 +498,18 @@ angular.module('framify.js', [
 
         };
 
+        //@ Generic Process Event Handler
+        this.handler = function( response ){
+
+            response = ( response.response ) ? response : response.data;
+
+            if(response.response == 200 ){
+                app.alert("<font color=green>Done</font>",response.data.message);
+            }else{
+                app.alert("<font color=red>Failed</font>",response.data.message);
+            }
+
+        };
 
 
 
@@ -724,15 +740,15 @@ function() {
 ,[ '$http','$localStorage'
 ,function($http,$localStorage){
 
-   var auth = this;
+   var r_auth = this;
 
-   auth.url         = 'http://bixbyte.io'
+   r_auth.url         = 'http://bixbyte.io'
 
-   auth.setUrl      = function( accessUrl ){
+   r_auth.setUrl      = function( accessUrl ){
 
        return new Promise( (resolve,reject) => {
             
-            auth.url    = accessUrl;
+            r_auth.url    = accessUrl;
             console.log(`The remote access url has been set to ${accessUrl}` );
             resolve(accessUrl);
 
@@ -740,7 +756,7 @@ function() {
        
    }
 
-   auth.SetAuth     = function( AuthToken ){
+   r_auth.SetAuth     = function( AuthToken ){
 
         return new Promise( function(resolve,reject){
             
@@ -751,11 +767,11 @@ function() {
     };
 
      //@ Perform User Registration
-    auth.Register  = function( credentials ){
+    r_auth.Register  = function( credentials ){
 
         return new Promise( function( resolve,reject ){
 
-            $http.post(`${auth.url}/auth/register`, credentials )
+            $http.post(`${r_auth.url}/auth/register`, credentials )
             .success(function(response){
 
                 if( response.response == 200 ){
@@ -778,18 +794,18 @@ function() {
     };
         
     //@ Perform a User Login
-    auth.Login          = function( credentials ){
+    r_auth.Login          = function( credentials ){
 
         return new Promise( function( resolve,reject ){
 
-            $http.post(`${auth.url}/auth/verify`, credentials )
+            $http.post(`${r_auth.url}/auth/verify`, credentials )
             .success(function(response){
 
                 if( response.response == 200 ){
 
                     $localStorage.framify_user   =  response.data.message ;
 
-                    auth.SetAuth( response.data.message.token );
+                    r_auth.SetAuth( response.data.message.token );
 
                     resolve( response.data.message )
 
@@ -809,12 +825,12 @@ function() {
     };
         
     //@ Perform A User Logout
-    auth.Logout         = function( ){
+    r_auth.Logout         = function( ){
 
         return new Promise( function(resolve,reject){
 
             delete $localStorage.framify_user;
-            auth.SetAuth(undefined)
+            r_auth.SetAuth(undefined)
             .then(resolve)
 
         });                         
@@ -973,6 +989,16 @@ function() {
 
         $rootScope.frame.changeAdmin(false);
         $scope.logedin = false;
+         
+        //@ Redirect to a given sub-state in the pre-defined 'app' main state
+        $scope.appRedirect = function(partialState){
+	    $state.go("app."+partialState);
+	}
+                
+        //@ Redirect to the specified state
+        $scope.goTo = function(completeState){
+            $state.go(completeState);
+        }
 
         //@ UNWANTED ANGULAR JS OBJECTS
         $scope.unwanted    = ["$$hashKey","$index"];
@@ -1872,14 +1898,18 @@ function() {
 
         return new Promise(function(reject,resolve){
             
+            console.log("Querying the remote server for identity")
+
             $http.get(`${$scope.remoteAuth.url}/auth/me`)
             .success(function(response){
                
+               console.log("Remote Knows who you are.")
                resolve( $scope.data.me = response.data.message  );
 
             })
             .error(function(error){
 
+                console.log("Something just didn't go well.")
                 $scope.auth.Logout()
                 .then(function(){
 
@@ -1901,8 +1931,11 @@ function() {
 
             if( !$scope.storage.framify_user ){
 
+                console.log("\nNo localstorage value is defined\n")
 
                 if($state.current.name != "app.login" ){
+
+                    console.log("\nRedirecting to the authentication page.\n")
 
                     $scope.app.notify("<i class='fa  fa-exclamation-triangle'></i>&nbsp;&nbsp;Please Login to continue.",'danger');
                     reject( $state.go("app.login") );                    
@@ -1911,8 +1944,12 @@ function() {
                 
             }else if( !$http.defaults.headers.common.Authorization || $http.defaults.headers.common.Authorization == undefined || $http.defaults.headers.common.Authorization == '' ){
 
+                    console.log("\nThe authentication header is not yet defined\n")
+
                     $scope.auth.SetAuth( undefined )
                     .then(function(  ){
+
+                        console.log(`\nThe authentication header has been set to ${$http.defaults.headers.common.Authorization}\n`)
 
                         if($state.current.name == "app.login" ){
                             resolve( $state.go("app.panel") );
@@ -1926,6 +1963,8 @@ function() {
                     
 
             }else{
+
+                console.log("\nAll Looks good! Let me see if I can get you into the party\n")
 
                 if($state.current.name == "app.login" ){
                    resolve( $state.go("app.panel") );
@@ -1943,6 +1982,8 @@ function() {
     $scope.r_handlers.isLogedIn   = function(){
 
         return new Promise( function(resolve, reject ){
+
+            console.log("Handing you over to the remote authentication server.")
 
             if( !$scope.storage.framify_user ){
 
@@ -1984,7 +2025,6 @@ function() {
         })
 
     };
-
 
 }])
 

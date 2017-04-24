@@ -85,7 +85,7 @@ var css     = [
                 'dependencies/css/uikit.min.css'
                 ,'dependencies/css/uikit.almost-flat.min.css'
                 ,'dependencies/css/main.min.css'    
-		        ,'dependencies/css/error_page.css'
+		,'dependencies/css/error_page.css'
                 //@ Chartist css
                 ,'dependencies/css/chartist.min.css'
                 //@ Font awesome
