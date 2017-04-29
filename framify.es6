@@ -11,8 +11,8 @@ angular.module('framify.js', [
 
 //@ Application running essentials
 .service("app"
-,['$http'
-,function($http) {
+,['$http','remoteAuth'
+,function($http,remoteAuth) {
 
         var app = this;
 
@@ -498,10 +498,7 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.post({
-                    url: destination
-                    ,data: data
-                })
+                $http.post(destination,data)
                 .success( resolve )
                 .error( reject )
 
@@ -514,9 +511,8 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.get({
-                    url: destination
-                    ,data: data
+                $http.get(destination, {
+                        params: data
                 })
                 .success( resolve )
                 .error( reject )
@@ -530,10 +526,7 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.put({
-                    url: destination
-                    ,data: data
-                })
+                $http.put(destination,data)
                 .success( resolve )
                 .error( reject )
 
@@ -541,12 +534,15 @@ angular.module('framify.js', [
 
         }; 
 
-        //@ JSONP HTTP DATA HANDLER 
-        this.jsonp   = ( destination, data ) => {
+
+        //@ DELETE HTTP DATA HANDLER 
+        this.delete   = ( destination, data ) => {
 
             return new Promise( (resolve,reject) => {
 
-                $http.jsonp(destination,data)
+                $http.delete(destination,{ 
+                    params: data
+                })
                 .success( resolve )
                 .error( reject )
 
@@ -554,14 +550,14 @@ angular.module('framify.js', [
 
         };
 
-        //@ DELETE HTTP DATA HANDLER 
-        this.delete   = ( destination, data ) => {
+        //Handle background calls to the web server for database integration
+        this.db = function(data,destination){
 
-            return new Promise( (resolve,reject) => {
+             return new Promise( (resolve,reject) => {
 
-                $http.delete({
-                    url: destination
-                    ,data: data
+                destination = ( destination ) ? destination : `${remoteAuth.url}/php`;
+                $http.get(  destination , {
+                        params: data
                 })
                 .success( resolve )
                 .error( reject )
@@ -578,7 +574,7 @@ angular.module('framify.js', [
             if(response.response == 200 ){
                 app.alert("<font color=green>Done</font>",app.str( response.data.message ) );
             }else{
-                app.alert("<font color=red>Failed</font>",app.str( response.data.message ) );
+                app.alert(`<font color=red>Failed</font> ( ${response.response} Error )`,app.str( response.data.message ) );
             }
 
         };
@@ -586,7 +582,7 @@ angular.module('framify.js', [
         //@ Generic Process Remote Event Handler
         this.remote_handler = function( response ){
            
-        	app.alert("<font color=blue>Data Response</font>",app.str( response ) );
+        	app.alert("<font color=blue>Data Response</font>",app.str( app.str( response ) ) );
 
         };
         this.remoteHandler 	= this.remote_handler;
@@ -599,53 +595,135 @@ angular.module('framify.js', [
 
 //@ The BASIC sms sending application service
 .service("sms" 
-,['app'
-,function(app) {
+,['app','remoteAuth'
+,function(app,remoteAuth) {
 
         /**
-         * This angular service allows for you to easily send SMS messages conveniently using bixbyte's default SMS server
+         * This angular service allows for you to easily send SMS messages conveniently using bixbyte's default SMS gateway platform
          * 
          * It allows the use of your *Framify SMS* android phone application to send simple SMS messages. 
          * 
          * You can easily extend it as you will since the socket connection to the server can be hooked to as "sms.socket"
          */
 
-        //@ BASIC APPLICATION INITIALIZATION
-        this.server = {};
-        this.server.host = '41.89.162.252:3000';
-        this.socket = io.connect(`${this.server.host}`);
-        const socket = this.socket;
+        //@ SMS BASIC APPLICATION INITIALIZATION
+
+        //@ Create a locally accessible copy of the 'sms' service
+        var sms = this; 
+
+        //@ Definition of the socket object
+        this.socket;
+        var socket = this.socket;
+
+        //@ The socket connection initiator object
+        this.start  = ( framify_sms_server_url ) => {
+
+            socket = io.connect( framify_sms_server_url || remoteAuth.url ); 
+
+            socket.on("connect", ()=>{
+                console.log("Successfully established a connection to the framify SMS gateway");
+            });
+
+            socket.on("disconnect", () => {
+                console.log("Dropped the framify SMS gateway connection.")
+            });
+
+            socket.on("reconnect", () => {
+                console.log("Re-established a connection to the SMS gateway.")
+            })
+
+            return Promise.resolve( app.make_response( 200, "Starting the SMS gateway") )
+            .catch((e)=>{
+                console.log("There was a problem when starting the SMS relay service.")
+                console.dir(e)
+            });
+
+        }
+
+        this.stop   = (  ) => {
+
+            //@ Disconnect any existing conections
+            if( socket ){
+
+                socket.disconnect();
+                console.log("Terminated all existing SMS gateway connections.");
+
+            }
+            
+            //@ Nullify the existing object
+            socket = undefined;
+
+            return Promise.resolve( app.make_response( 200, "Stoping the SMS gateway") )
+            .catch((e)=>{
+                console.log("There was a problem when starting the SMS relay service")
+                console.dir(e)
+            })
+
+        }
 
         //@ SEND EXPRESS SMS'
         this.SMS = (smsData) => {
-            socket.emit("sendSMS" ,smsData);
-            return Promise.resolve(true)
-            .catch(function(e){
-                console.log("Encountered an error when processing the sms function.")
-                console.dir(e)
-            })            
+
+            //@ Ensure that the SMS service provision gateway is set
+            if( socket ){ 
+
+                socket.emit("sendSMS" ,smsData);
+                return Promise.resolve(true)
+                .catch(function(e){
+                    console.log("Encountered an error when processing the sms function.")
+                    console.dir(e)
+                })
+
+            //@ Ask the user to initialize the sms service
+            }else{
+                
+                app.alert( "<font  color=red>SMS SERVICE NOT STARTED</font>", "Framify failed to execute an SMS related command.<br>Reason: <code>The SMS service provider has not been defined.</code>" )
+                return Promise.reject(false)
+                .catch(function(e){
+                    console.log("Encountered an error when processing the sms function.")
+                    console.dir(e)
+                })
+
+            }
+
+                       
         };
 
         //@ SEND A SINGLE SMS
         this.oneSMS = (tel ,mess ,apiKey) => {
 
-            var obj;
-            if (Array.isArray(tel)) {
-                obj = tel;
-            } else {
-                obj = {
-                    telephone: tel,
-                    message: mess,
-                    password: apiKey
-                };
-            }
+            //@ Ensure that the SMS service provision gateway is set
+            if( socket ){
 
-            socket.emit("sendSMS" ,obj);
-            return Promise.resolve(true)
-            .catch(function(e){
-                console.log("Encountered an error when processing the sendsms function.")
-                console.dir(e)
-            });
+                var obj;
+                if (Array.isArray(tel)) {
+                    obj = tel;
+                } else {
+                    obj = {
+                        telephone: tel,
+                        message: mess,
+                        password: apiKey
+                    };
+                }
+
+                socket.emit("sendSMS" ,obj);
+                return Promise.resolve(app.make_response( 200, "Queued the SMS for sending"))
+                .catch(function(e){
+                    console.log("Encountered an error when processing the sendsms function.")
+                    console.dir(e)
+                });
+
+            //@ Ask the user to initialize the sms service
+            }else{
+                
+                app.alert( "<font  color=red>SMS SERVICE NOT STARTED</font>", "Framify failed to execute an SMS related command.<br>Reason: <code>The SMS service provider has not been defined.</code>" )
+                return Promise.reject(false)
+                .catch(function(e){
+                    console.log("Encountered an error when processing the sms function.")
+                    console.dir(e)
+                })
+
+            }
 
         };
 
@@ -654,37 +732,48 @@ angular.module('framify.js', [
 
             return new Promise( (resolve ,reject) => {
 
-                let obj = [];
+                //@ Ensure that the SMS service provision gateway is set
+                if( socket ){
 
-                //* Ensure that the API key has been set
-                if (!apiKey) {
-                    app.alert("<font style='weight:bold;color:red;'>ERROR</font>",'<center>Failed to instantiate the SMS sending service before api Key definition.</center>');
-                } else if (Array.isArray(contacts)) {
+                    let obj = [];
 
-                    //* handle an array of contacts
-                    contacts.forEach( (element) => {
+                    //* Ensure that the API key has been set
+                    if (!apiKey) {
+                        app.alert("<font style='weight:bold;color:red;'>ERROR</font>",'<center>Failed to instantiate the SMS sending service before api Key definition.</center>');
+                    } else if (Array.isArray(contacts)) {
 
-                        if (app.isTelephone(element)) {
+                        //* handle an array of contacts
+                        contacts.forEach( (element) => {
 
-                            obj.push({
-                                telephone: element,
-                                message: data,
-                                apiKey: apiKey
-                            });
+                            if (app.isTelephone(element)) {
 
-                        } else {
+                                obj.push({
+                                    telephone: element,
+                                    message: data,
+                                    apiKey: apiKey
+                                });
 
-                            app.alert("<font style='weight:bold;color:red;'>Invalid telephone number encountered</font>",'<center>Could not send an SMS message to the invalid number ' + element + '.</center>');
+                            } else {
 
-                        }
+                                app.notify('<center>Could not send an SMS message to the invalid number ' + element + '.</center>','danger');
 
-                    }, this);
+                            }
 
-                    socket.emit("sendSMS", obj);
-                    resolve(true);
+                        }, this);
 
-                } else {
-                    app.alert("<font style='weight:bold;color:red;'>Bulk SMS error.</font>" ,'<center>You can only use the bulk SMS service with an array of telephone contacts</center>');
+                        socket.emit("sendSMS", obj);
+                        resolve(app.make_response( 200, "Queued the messages for sending."));
+
+                    } else {
+                        app.notify('<font style="weight:bold;color:white;">Bulk SMS error.</font><br><center>You can only use the bulk SMS service with an array of telephone contacts</center>','danger');
+                    }
+
+                //@ Ask the user to initialize the sms service
+                }else{
+                    
+                    app.alert( "<font  color=red>SMS SERVICE NOT STARTED</font>", "Framify failed to execute an SMS related command.<br>Reason: <code>The SMS service provider has not been defined.</code>" )
+                    reject(app.make_response( 500, "The SMS service is not started."));
+
                 }
 
             });       
@@ -921,8 +1010,8 @@ function() {
 
 
 .run(
-["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms" ,"auth","remoteAuth"
-,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms ,auth, remoteAuth) {
+["app" ,"cgi" ,"$rootScope" ,"$state" ,"$localStorage" ,"sms" ,"auth","remoteAuth","$http"
+,function(app ,cgi ,$rootScope ,$state ,$localStorage ,sms ,auth, remoteAuth ,$http) {
 
         //! INJECT THE LOCATION SOURCE TO THE ROOT SCOPE
         $rootScope.location     = $state;
@@ -984,6 +1073,12 @@ function() {
             window.location = "/#/";
         };
 
+        //@ SET THE DEFAULT HTTP AUTHORIZATION HEADERS WHERE NEED BE
+        if( $localStorage.framify_user ){
+            $http.defaults.headers.common.Authorization = $localStorage.framify_user.token                                                                                                                  ;
+        }
+        
+        
 
     }])
 
