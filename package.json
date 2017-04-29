@@ -1,6 +1,6 @@
 {
   "name": "framify.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Official UI<=>SERVER handler for framify and bixbyte-frame projects",
   "main": "framify.es6",
   "scripts": {
