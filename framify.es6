@@ -234,9 +234,11 @@ angular.module('framify.js', [
         this.ajax = (method ,target ,data) => {
 
             return $.ajax({
-                method: method || "POST",
-                url: target,
-                data: data
+                method: method || "POST"
+                ,url: target
+                ,data: data
+                ,dataType: 'jsonp'
+               ,headers: {'Access-Control-Allow-Origin': "*" }
             });
            
         };
@@ -244,18 +246,20 @@ angular.module('framify.js', [
         //!HANDLE JSON REQUESTS 
         this.getJSON = (target) => {
 
-            return $.getJSON(target);
+            return $.getJSON( target.replace(/callback=?/ig,"") + '?callback=?');
 
         };
+        this.get_json	= this.getJSON;
 
         //! HANDLE CORS CALLS WITH jsonp ENABLED
         this.cgi = (method ,url ,data) => {
 
             return $.ajax({
-                method: method || "GET",
-                url: url,
-                data: data,
-                dataType: 'jsonp',
+                method: method || "GET"
+                ,url: url
+                ,data: data
+                ,dataType: 'jsonp'
+                ,headers: {'Access-Control-Allow-Origin': "*" }
             });
 
         };
@@ -288,7 +292,7 @@ angular.module('framify.js', [
             <center>${message||'</center><font color=red font-weight=bold; font-size=2em>Oops!</font><br>False alarm!<center>'}</center>`);
 
             if( cb && typeof(cb) == "function" ){
-                return Promise.resolve(cb())
+                return Promise.resolve(cb(message))
                 .catch(function(e){
                    console.log("Encountered an error when processing the alert function.")
                    console.dir(e)
@@ -312,7 +316,7 @@ angular.module('framify.js', [
                 <hr>
                 <center>${message}</center>`,()=>{
                     if(cb && typeof(cb) == "function"){
-                        resolve(cb());
+                        resolve(cb(message));
                     }else{
                         resolve(true);
                     }
@@ -378,7 +382,7 @@ angular.module('framify.js', [
         this.unique = (array_) => {
 
            if( !Array.isArray(array_) ){
-               notify('Could not remove duplicates from a non array object','danger');
+               app.notify('Could not remove duplicates from a non array object','danger');
                return array_;
            }else{
 
@@ -409,18 +413,82 @@ angular.module('framify.js', [
         };
 
         this.removeDuplicates = this.unique;
+        this.remove_duplicates = this.removeDuplicates;
 
         //* COUNT OCCURANCES IN AN ARRAY
         this.count = (searchParam ,arrayObject) => {
+ 
 
-            var cnt = 0;
+            //@ Ensure that the Object to be searched is an array
+            if( Array.isArray( arrayObject ) ){
 
-            for(var v in arrayObject) {
-                if (searchParam === arrayObject[v]) {
-                    cnt += 1;
+                //@ Handle Multiple Item Searches
+                if(  Array.isArray(searchParam)  ){
+
+                    //@ The Required placeholder objects
+                    var i   = 0;
+                    var cnt = [];
+
+                    //@ Loop through each item in the search array
+                    for( var searchVal in searchParam  ){
+
+                        //@ Instantiate the counter object for this particular Item
+                        cnt[i]  =   0;
+
+                        //@ Loop through the array searching for the item
+                        for( var v in arrayObject ){
+
+                            //@ If the item is found, 
+                            if( searchParam[searchVal] === arrayObject[v] ){
+                              
+                                //@ Increment the number of instances in the 'found' Array
+                                cnt[i]  = ( isNaN(cnt[i]) ) ? 1 : cnt[i]+=1 ; 
+
+                            } 
+
+                        }
+                        
+                        //@ Move to the next Item 
+                        i++;
+
+                    }
+                    
+                    //@ Return the result to the client
+                    return cnt;
+
+
+                //@ Handle Single Item searches
+                }else{ 
+
+                    //@ Instantiate the neede placeholders
+                    var cnt = 0;
+
+                    //@ Loop through the Array searching for the value
+                    for(var v in arrayObject) {
+
+                        //@ When a match is found
+                        if (searchParam === arrayObject[v]) {
+
+                            //@ Increment the number of occurences
+                            cnt += 1;
+
+                        }
+
+                    }
+
+                    //@ Return the 'number of occurences'
+                    return cnt;
+
                 }
+
+            //@ Object is not an array
+            }else{
+
+                app.notify("The object to perform an array count on is not an Array.","danger");
+
             }
-            return cnt;
+
+            
 
         };
 
@@ -430,7 +498,10 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.post(destination,data)
+                $http.post({
+                    url: destination
+                    ,data: data
+                })
                 .success( resolve )
                 .error( reject )
 
@@ -443,7 +514,10 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.get(destination,data)
+                $http.get({
+                    url: destination
+                    ,data: data
+                })
                 .success( resolve )
                 .error( reject )
 
@@ -456,7 +530,10 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.put(destination,data)
+                $http.put({
+                    url: destination
+                    ,data: data
+                })
                 .success( resolve )
                 .error( reject )
 
@@ -482,7 +559,10 @@ angular.module('framify.js', [
 
             return new Promise( (resolve,reject) => {
 
-                $http.delete(destination,data)
+                $http.delete({
+                    url: destination
+                    ,data: data
+                })
                 .success( resolve )
                 .error( reject )
 
@@ -496,12 +576,20 @@ angular.module('framify.js', [
             response = ( response.response ) ? response : response.data;
 
             if(response.response == 200 ){
-                app.alert("<font color=green>Done</font>",response.data.message);
+                app.alert("<font color=green>Done</font>",app.str( response.data.message ) );
             }else{
-                app.alert("<font color=red>Failed</font>",response.data.message);
+                app.alert("<font color=red>Failed</font>",app.str( response.data.message ) );
             }
 
         };
+        
+        //@ Generic Process Remote Event Handler
+        this.remote_handler = function( response ){
+           
+        	app.alert("<font color=blue>Data Response</font>",app.str( response ) );
+
+        };
+        this.remoteHandler 	= this.remote_handler;
 
 
 

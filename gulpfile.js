@@ -19,6 +19,8 @@ var dependencies = [
                 //@ angular and ui router
                 ,'dependencies/js/angular.js'
                 ,'dependencies/js/angular-ui-router.js'
+                //@ json-formatter
+                ,'dependencies/js/json-formatter.min.js'
                 //@ angular charts
                 ,'dependencies/js/Chart.js'
                 ,'dependencies/js/angular-chart.js'
@@ -30,8 +32,6 @@ var dependencies = [
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
                 ,'dependencies/js/ngStorage.js'
-                //@ json-formatter
-                ,'dependencies/js/json-formatter.min.js'
                 //@ framify-paginate
                 ,'dependencies/js/framify-paginate.js'
                 //@ date-formatter
@@ -52,6 +52,8 @@ var bundled = [
                 //@ angular and ui router
                 ,'dependencies/js/angular.js'
                 ,'dependencies/js/angular-ui-router.js'
+                //@ json-formatter
+                ,'dependencies/js/json-formatter.min.js'
                 //@ angular charts
                 ,'dependencies/js/Chart.js'
                 ,'dependencies/js/angular-chart.js'
@@ -62,9 +64,7 @@ var bundled = [
                 // ,'dependencies/js/uikit.min.js' -- useless DO NOT IMPORT
                 ,'dependencies/js/notify.min.js'
                 //@ ngStorage
-                ,'dependencies/js/ngStorage.js'
-                //@ json-formatter
-                ,'dependencies/js/json-formatter.min.js'
+                ,'dependencies/js/ngStorage.js'                
                 //@ framify-paginate
                 ,'dependencies/js/framify-paginate.js'
                 //@ date-formatter

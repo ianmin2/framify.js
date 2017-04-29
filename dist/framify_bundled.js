@@ -30835,6 +30835,92 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
   angular.module('ui.router.state').filter('isState', $IsStateFilter).filter('includedByState', $IncludedByStateFilter);
 })(window, window.angular);
+/*!
+ * jsonformatter
+ * 
+ * Version: 0.6.0 - 2016-08-27T12:58:03.306Z
+ * License: Apache-2.0
+ */
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+angular.module("jsonFormatter", ["RecursionHelper"]).provider("JSONFormatterConfig", function () {
+  var n = !1,
+      e = 100,
+      t = 5;return { get hoverPreviewEnabled() {
+      return n;
+    }, set hoverPreviewEnabled(e) {
+      n = !!e;
+    }, get hoverPreviewArrayCount() {
+      return e;
+    }, set hoverPreviewArrayCount(n) {
+      e = parseInt(n, 10);
+    }, get hoverPreviewFieldCount() {
+      return t;
+    }, set hoverPreviewFieldCount(n) {
+      t = parseInt(n, 10);
+    }, $get: function $get() {
+      return { hoverPreviewEnabled: n, hoverPreviewArrayCount: e, hoverPreviewFieldCount: t };
+    } };
+}).directive("jsonFormatter", ["RecursionHelper", "JSONFormatterConfig", function (n, e) {
+  function t(n) {
+    return n.replace('"', '"');
+  }function r(n) {
+    if (void 0 === n) return "";if (null === n) return "Object";if ("object" == (typeof n === "undefined" ? "undefined" : _typeof(n)) && !n.constructor) return "Object";if (void 0 !== n.__proto__ && void 0 !== n.__proto__.constructor && void 0 !== n.__proto__.constructor.name) return n.__proto__.constructor.name;var e = /function (.{1,})\(/,
+        t = e.exec(n.constructor.toString());return t && t.length > 1 ? t[1] : "";
+  }function o(n) {
+    return null === n ? "null" : typeof n === "undefined" ? "undefined" : _typeof(n);
+  }function s(n, e) {
+    var r = o(n);return "null" === r || "undefined" === r ? r : ("string" === r && (e = '"' + t(e) + '"'), "function" === r ? n.toString().replace(/[\r\n]/g, "").replace(/\{.*\}/, "") + "{…}" : e);
+  }function i(n) {
+    var e = "";return angular.isObject(n) ? (e = r(n), angular.isArray(n) && (e += "[" + n.length + "]")) : e = s(n, n), e;
+  }function a(n) {
+    n.isArray = function () {
+      return angular.isArray(n.json);
+    }, n.isObject = function () {
+      return angular.isObject(n.json);
+    }, n.getKeys = function () {
+      if (n.isObject()) return Object.keys(n.json).map(function (n) {
+        return "" === n ? '""' : n;
+      });
+    }, n.type = o(n.json), n.hasKey = "undefined" != typeof n.key, n.getConstructorName = function () {
+      return r(n.json);
+    }, "string" === n.type && ("Invalid Date" !== new Date(n.json).toString() && (n.isDate = !0), 0 === n.json.indexOf("http") && (n.isUrl = !0)), n.isEmptyObject = function () {
+      return n.getKeys() && !n.getKeys().length && n.isOpen && !n.isArray();
+    }, n.isOpen = !!n.open, n.toggleOpen = function () {
+      n.isOpen = !n.isOpen;
+    }, n.childrenOpen = function () {
+      return n.open > 1 ? n.open - 1 : 0;
+    }, n.openLink = function (e) {
+      e && (window.location.href = n.json);
+    }, n.parseValue = function (e) {
+      return s(n.json, e);
+    }, n.showThumbnail = function () {
+      return !!e.hoverPreviewEnabled && n.isObject() && !n.isOpen;
+    }, n.getThumbnail = function () {
+      if (n.isArray()) return n.json.length > e.hoverPreviewArrayCount ? "Array[" + n.json.length + "]" : "[" + n.json.map(i).join(", ") + "]";var t = n.getKeys(),
+          r = t.slice(0, e.hoverPreviewFieldCount),
+          o = r.map(function (e) {
+        return e + ":" + i(n.json[e]);
+      }),
+          s = t.length >= 5 ? "…" : "";return "{" + o.join(", ") + s + "}";
+    };
+  }return { templateUrl: "json-formatter.html", restrict: "E", replace: !0, scope: { json: "=", key: "=", open: "=" }, compile: function compile(e) {
+      return n.compile(e, a);
+    } };
+}]), "object" == (typeof module === "undefined" ? "undefined" : _typeof(module)) && (module.exports = "jsonFormatter"), angular.module("RecursionHelper", []).factory("RecursionHelper", ["$compile", function (n) {
+  return { compile: function compile(e, t) {
+      angular.isFunction(t) && (t = { post: t });var r,
+          o = e.contents().remove();return { pre: t && t.pre ? t.pre : null, post: function post(e, s) {
+          r || (r = n(o)), r(e, function (n) {
+            s.append(n);
+          }), t && t.post && t.post.apply(null, arguments);
+        } };
+    } };
+}]), angular.module("jsonFormatter").run(["$templateCache", function (n) {
+  n.put("json-formatter.html", '<div ng-init="isOpen = open && open > 0" class="json-formatter-row"><a ng-click="toggleOpen()"><span class="toggler {{isOpen ? \'open\' : \'\'}}" ng-if="isObject()"></span> <span class="key" ng-if="hasKey"><span class="key-text">{{key}}</span><span class="colon">:</span></span> <span class="value"><span ng-if="isObject()"><span class="constructor-name">{{getConstructorName(json)}}</span> <span ng-if="isArray()"><span class="bracket">[</span><span class="number">{{json.length}}</span><span class="bracket">]</span></span></span> <span ng-if="!isObject()" ng-click="openLink(isUrl)" class="{{type}}" ng-class="{date: isDate, url: isUrl}">{{parseValue(json)}}</span></span> <span ng-if="showThumbnail()" class="thumbnail-text">{{getThumbnail()}}</span></a><div class="children" ng-if="getKeys().length && isOpen"><json-formatter ng-repeat="key in getKeys() track by $index" json="json[key]" key="key" open="childrenOpen()"></json-formatter></div><div class="children empty object" ng-if="isEmptyObject()"></div><div class="children empty array" ng-if="getKeys() && !getKeys().length && isOpen && isArray()"></div></div>');
+}]);
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -43078,86 +43164,6 @@ code.google.com/p/crypto-js/wiki/License
         }];
     }
 });
-"use strict";
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-angular.module("jsonFormatter", ["RecursionHelper"]).provider("JSONFormatterConfig", function () {
-  var n = !1,
-      e = 100,
-      t = 5;return { get hoverPreviewEnabled() {
-      return n;
-    }, set hoverPreviewEnabled(e) {
-      n = !!e;
-    }, get hoverPreviewArrayCount() {
-      return e;
-    }, set hoverPreviewArrayCount(n) {
-      e = parseInt(n, 10);
-    }, get hoverPreviewFieldCount() {
-      return t;
-    }, set hoverPreviewFieldCount(n) {
-      t = parseInt(n, 10);
-    }, $get: function $get() {
-      return { hoverPreviewEnabled: n, hoverPreviewArrayCount: e, hoverPreviewFieldCount: t };
-    } };
-}).directive("jsonFormatter", ["RecursionHelper", "JSONFormatterConfig", function (n, e) {
-  function t(n) {
-    return n.replace('"', '"');
-  }function r(n) {
-    if (void 0 === n) return "";if (null === n) return "Object";if ("object" == (typeof n === "undefined" ? "undefined" : _typeof(n)) && !n.constructor) return "Object";var e = /function (.{1,})\(/,
-        t = e.exec(n.constructor.toString());return t && t.length > 1 ? t[1] : "";
-  }function o(n) {
-    return null === n ? "null" : typeof n === "undefined" ? "undefined" : _typeof(n);
-  }function s(n, e) {
-    var r = o(n);return "null" === r || "undefined" === r ? r : ("string" === r && (e = '"' + t(e) + '"'), "function" === r ? n.toString().replace(/[\r\n]/g, "").replace(/\{.*\}/, "") + "{…}" : e);
-  }function i(n) {
-    var e = "";return angular.isObject(n) ? (e = r(n), angular.isArray(n) && (e += "[" + n.length + "]")) : e = s(n, n), e;
-  }function a(n) {
-    n.isArray = function () {
-      return angular.isArray(n.json);
-    }, n.isObject = function () {
-      return angular.isObject(n.json);
-    }, n.getKeys = function () {
-      return n.isObject() ? Object.keys(n.json).map(function (n) {
-        return "" === n ? '""' : n;
-      }) : void 0;
-    }, n.type = o(n.json), n.hasKey = "undefined" != typeof n.key, n.getConstructorName = function () {
-      return r(n.json);
-    }, "string" === n.type && ("Invalid Date" !== new Date(n.json).toString() && (n.isDate = !0), 0 === n.json.indexOf("http") && (n.isUrl = !0)), n.isEmptyObject = function () {
-      return n.getKeys() && !n.getKeys().length && n.isOpen && !n.isArray();
-    }, n.isOpen = !!n.open, n.toggleOpen = function () {
-      n.isOpen = !n.isOpen;
-    }, n.childrenOpen = function () {
-      return n.open > 1 ? n.open - 1 : 0;
-    }, n.openLink = function (e) {
-      e && (window.location.href = n.json);
-    }, n.parseValue = function (e) {
-      return s(n.json, e);
-    }, n.showThumbnail = function () {
-      return !!e.hoverPreviewEnabled && n.isObject() && !n.isOpen;
-    }, n.getThumbnail = function () {
-      if (n.isArray()) return n.json.length > e.hoverPreviewArrayCount ? "Array[" + n.json.length + "]" : "[" + n.json.map(i).join(", ") + "]";var t = n.getKeys(),
-          r = t.slice(0, e.hoverPreviewFieldCount),
-          o = r.map(function (e) {
-        return e + ":" + i(n.json[e]);
-      }),
-          s = t.length >= 5 ? "…" : "";return "{" + o.join(", ") + s + "}";
-    };
-  }return { templateUrl: "json-formatter.html", restrict: "E", replace: !0, scope: { json: "=", key: "=", open: "=" }, compile: function compile(e) {
-      return n.compile(e, a);
-    } };
-}]), "object" == (typeof module === "undefined" ? "undefined" : _typeof(module)) && (module.exports = "jsonFormatter"), angular.module("RecursionHelper", []).factory("RecursionHelper", ["$compile", function (n) {
-  return { compile: function compile(e, t) {
-      angular.isFunction(t) && (t = { post: t });var r,
-          o = e.contents().remove();return { pre: t && t.pre ? t.pre : null, post: function post(e, s) {
-          r || (r = n(o)), r(e, function (n) {
-            s.append(n);
-          }), t && t.post && t.post.apply(null, arguments);
-        } };
-    } };
-}]), angular.module("jsonFormatter").run(["$templateCache", function (n) {
-  n.put("json-formatter.html", '<div ng-init="isOpen = open && open > 0" class="json-formatter-row"><a ng-click="toggleOpen()"><span class="toggler {{isOpen ? \'open\' : \'\'}}" ng-if="isObject()"></span> <span class="key" ng-if="hasKey"><span class="key-text">{{key}}</span><span class="colon">:</span></span> <span class="value"><span ng-if="isObject()"><span class="constructor-name">{{getConstructorName(json)}}</span> <span ng-if="isArray()"><span class="bracket">[</span><span class="number">{{json.length}}</span><span class="bracket">]</span></span></span> <span ng-if="!isObject()" ng-click="openLink(isUrl)" class="{{type}}" ng-class="{date: isDate, url: isUrl}">{{parseValue(json)}}</span></span> <span ng-if="showThumbnail()" class="thumbnail-text">{{getThumbnail()}}</span></a><div class="children" ng-if="getKeys().length && isOpen"><json-formatter ng-repeat="key in getKeys() track by $index" json="json[key]" key="key" open="childrenOpen()"></json-formatter></div><div class="children empty object" ng-if="isEmptyObject()"></div><div class="children empty array" ng-if="getKeys() && !getKeys().length && isOpen && isArray()"></div></div>');
-}]);
 'use strict';
 
 /**
@@ -51141,15 +51147,18 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return $.ajax({
             method: method || "POST",
             url: target,
-            data: data
+            data: data,
+            dataType: 'jsonp',
+            headers: { 'Access-Control-Allow-Origin': "*" }
         });
     };
 
     //!HANDLE JSON REQUESTS 
     this.getJSON = function (target) {
 
-        return $.getJSON(target);
+        return $.getJSON(target.replace(/callback=?/ig, "") + '?callback=?');
     };
+    this.get_json = this.getJSON;
 
     //! HANDLE CORS CALLS WITH jsonp ENABLED
     this.cgi = function (method, url, data) {
@@ -51158,7 +51167,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             method: method || "GET",
             url: url,
             data: data,
-            dataType: 'jsonp'
+            dataType: 'jsonp',
+            headers: { 'Access-Control-Allow-Origin': "*" }
         });
     };
 
@@ -51186,7 +51196,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         UIkit.modal.alert('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Notice') + '</font>\n            <hr>\n            <center>' + (message || '</center><font color=red font-weight=bold; font-size=2em>Oops!</font><br>False alarm!<center>') + '</center>');
 
         if (cb && typeof cb == "function") {
-            return Promise.resolve(cb()).catch(function (e) {
+            return Promise.resolve(cb(message)).catch(function (e) {
                 console.log("Encountered an error when processing the alert function.");
                 console.dir(e);
             });
@@ -51205,7 +51215,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             UIkit.modal.confirm('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Confirmation required.') + '</font>\n                <hr>\n                <center>' + message + '</center>', function () {
                 if (cb && typeof cb == "function") {
-                    resolve(cb());
+                    resolve(cb(message));
                 } else {
                     resolve(true);
                 }
@@ -51280,7 +51290,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     this.unique = function (array_) {
 
         if (!Array.isArray(array_)) {
-            notify('Could not remove duplicates from a non array object', 'danger');
+            app.notify('Could not remove duplicates from a non array object', 'danger');
             return array_;
         } else {
 
@@ -51309,18 +51319,71 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
 
     this.removeDuplicates = this.unique;
+    this.remove_duplicates = this.removeDuplicates;
 
     //* COUNT OCCURANCES IN AN ARRAY
     this.count = function (searchParam, arrayObject) {
 
-        var cnt = 0;
+        //@ Ensure that the Object to be searched is an array
+        if (Array.isArray(arrayObject)) {
 
-        for (var v in arrayObject) {
-            if (searchParam === arrayObject[v]) {
-                cnt += 1;
+            //@ Handle Multiple Item Searches
+            if (Array.isArray(searchParam)) {
+
+                //@ The Required placeholder objects
+                var i = 0;
+                var cnt = [];
+
+                //@ Loop through each item in the search array
+                for (var searchVal in searchParam) {
+
+                    //@ Instantiate the counter object for this particular Item
+                    cnt[i] = 0;
+
+                    //@ Loop through the array searching for the item
+                    for (var v in arrayObject) {
+
+                        //@ If the item is found, 
+                        if (searchParam[searchVal] === arrayObject[v]) {
+
+                            //@ Increment the number of instances in the 'found' Array
+                            cnt[i] = isNaN(cnt[i]) ? 1 : cnt[i] += 1;
+                        }
+                    }
+
+                    //@ Move to the next Item 
+                    i++;
+                }
+
+                //@ Return the result to the client
+                return cnt;
+
+                //@ Handle Single Item searches
+            } else {
+
+                //@ Instantiate the neede placeholders
+                var cnt = 0;
+
+                //@ Loop through the Array searching for the value
+                for (var v in arrayObject) {
+
+                    //@ When a match is found
+                    if (searchParam === arrayObject[v]) {
+
+                        //@ Increment the number of occurences
+                        cnt += 1;
+                    }
+                }
+
+                //@ Return the 'number of occurences'
+                return cnt;
             }
+
+            //@ Object is not an array
+        } else {
+
+            app.notify("The object to perform an array count on is not an Array.", "danger");
         }
-        return cnt;
     };
 
     //@ POST HTTP DATA HANDLER  
@@ -51328,7 +51391,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.post(destination, data).success(resolve).error(reject);
+            $http.post({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -51337,7 +51403,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.get(destination, data).success(resolve).error(reject);
+            $http.get({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -51346,7 +51415,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.put(destination, data).success(resolve).error(reject);
+            $http.put({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -51364,7 +51436,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.delete(destination, data).success(resolve).error(reject);
+            $http.delete({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -51374,11 +51449,18 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         response = response.response ? response : response.data;
 
         if (response.response == 200) {
-            app.alert("<font color=green>Done</font>", response.data.message);
+            app.alert("<font color=green>Done</font>", app.str(response.data.message));
         } else {
-            app.alert("<font color=red>Failed</font>", response.data.message);
+            app.alert("<font color=red>Failed</font>", app.str(response.data.message));
         }
     };
+
+    //@ Generic Process Remote Event Handler
+    this.remote_handler = function (response) {
+
+        app.alert("<font color=blue>Data Response</font>", app.str(response));
+    };
+    this.remoteHandler = this.remote_handler;
 }])
 
 //@ The BASIC sms sending application service

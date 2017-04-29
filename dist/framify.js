@@ -250,15 +250,18 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return $.ajax({
             method: method || "POST",
             url: target,
-            data: data
+            data: data,
+            dataType: 'jsonp',
+            headers: { 'Access-Control-Allow-Origin': "*" }
         });
     };
 
     //!HANDLE JSON REQUESTS 
     this.getJSON = function (target) {
 
-        return $.getJSON(target);
+        return $.getJSON(target.replace(/callback=?/ig, "") + '?callback=?');
     };
+    this.get_json = this.getJSON;
 
     //! HANDLE CORS CALLS WITH jsonp ENABLED
     this.cgi = function (method, url, data) {
@@ -267,7 +270,8 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
             method: method || "GET",
             url: url,
             data: data,
-            dataType: 'jsonp'
+            dataType: 'jsonp',
+            headers: { 'Access-Control-Allow-Origin': "*" }
         });
     };
 
@@ -295,7 +299,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         UIkit.modal.alert('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Notice') + '</font>\n            <hr>\n            <center>' + (message || '</center><font color=red font-weight=bold; font-size=2em>Oops!</font><br>False alarm!<center>') + '</center>');
 
         if (cb && typeof cb == "function") {
-            return Promise.resolve(cb()).catch(function (e) {
+            return Promise.resolve(cb(message)).catch(function (e) {
                 console.log("Encountered an error when processing the alert function.");
                 console.dir(e);
             });
@@ -314,7 +318,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
             UIkit.modal.confirm('<font color="#1976D2" style="font-weight:bold;text-transform:uppercase;">' + (title || 'Confirmation required.') + '</font>\n                <hr>\n                <center>' + message + '</center>', function () {
                 if (cb && typeof cb == "function") {
-                    resolve(cb());
+                    resolve(cb(message));
                 } else {
                     resolve(true);
                 }
@@ -389,7 +393,7 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     this.unique = function (array_) {
 
         if (!Array.isArray(array_)) {
-            notify('Could not remove duplicates from a non array object', 'danger');
+            app.notify('Could not remove duplicates from a non array object', 'danger');
             return array_;
         } else {
 
@@ -418,18 +422,71 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
     };
 
     this.removeDuplicates = this.unique;
+    this.remove_duplicates = this.removeDuplicates;
 
     //* COUNT OCCURANCES IN AN ARRAY
     this.count = function (searchParam, arrayObject) {
 
-        var cnt = 0;
+        //@ Ensure that the Object to be searched is an array
+        if (Array.isArray(arrayObject)) {
 
-        for (var v in arrayObject) {
-            if (searchParam === arrayObject[v]) {
-                cnt += 1;
+            //@ Handle Multiple Item Searches
+            if (Array.isArray(searchParam)) {
+
+                //@ The Required placeholder objects
+                var i = 0;
+                var cnt = [];
+
+                //@ Loop through each item in the search array
+                for (var searchVal in searchParam) {
+
+                    //@ Instantiate the counter object for this particular Item
+                    cnt[i] = 0;
+
+                    //@ Loop through the array searching for the item
+                    for (var v in arrayObject) {
+
+                        //@ If the item is found, 
+                        if (searchParam[searchVal] === arrayObject[v]) {
+
+                            //@ Increment the number of instances in the 'found' Array
+                            cnt[i] = isNaN(cnt[i]) ? 1 : cnt[i] += 1;
+                        }
+                    }
+
+                    //@ Move to the next Item 
+                    i++;
+                }
+
+                //@ Return the result to the client
+                return cnt;
+
+                //@ Handle Single Item searches
+            } else {
+
+                //@ Instantiate the neede placeholders
+                var cnt = 0;
+
+                //@ Loop through the Array searching for the value
+                for (var v in arrayObject) {
+
+                    //@ When a match is found
+                    if (searchParam === arrayObject[v]) {
+
+                        //@ Increment the number of occurences
+                        cnt += 1;
+                    }
+                }
+
+                //@ Return the 'number of occurences'
+                return cnt;
             }
+
+            //@ Object is not an array
+        } else {
+
+            app.notify("The object to perform an array count on is not an Array.", "danger");
         }
-        return cnt;
     };
 
     //@ POST HTTP DATA HANDLER  
@@ -437,7 +494,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.post(destination, data).success(resolve).error(reject);
+            $http.post({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -446,7 +506,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.get(destination, data).success(resolve).error(reject);
+            $http.get({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -455,7 +518,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.put(destination, data).success(resolve).error(reject);
+            $http.put({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -473,7 +539,10 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
         return new Promise(function (resolve, reject) {
 
-            $http.delete(destination, data).success(resolve).error(reject);
+            $http.delete({
+                url: destination,
+                data: data
+            }).success(resolve).error(reject);
         });
     };
 
@@ -483,11 +552,18 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         response = response.response ? response : response.data;
 
         if (response.response == 200) {
-            app.alert("<font color=green>Done</font>", response.data.message);
+            app.alert("<font color=green>Done</font>", app.str(response.data.message));
         } else {
-            app.alert("<font color=red>Failed</font>", response.data.message);
+            app.alert("<font color=red>Failed</font>", app.str(response.data.message));
         }
     };
+
+    //@ Generic Process Remote Event Handler
+    this.remote_handler = function (response) {
+
+        app.alert("<font color=blue>Data Response</font>", app.str(response));
+    };
+    this.remoteHandler = this.remote_handler;
 }])
 
 //@ The BASIC sms sending application service
