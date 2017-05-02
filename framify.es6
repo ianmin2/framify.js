@@ -59,17 +59,23 @@ angular.module('framify.js', [
 
         //* CONDITIONALLY TRANSFORM TO STRING
         this.str    = (obj) => (typeof(obj) === "object") ? JSON.stringify(obj) : obj;
+        this.stringify = ( obj ) => Promise.resolve( app.str(obj) );
 
         //* CONDITIONALLY TRANSFORM TO JSON
         this.json   = (obj) => (typeof(obj) === "object") ? obj : JSON.parse(obj);
+        this.jsonify = (obj) => Promise.resolve( app.json(obj) )
 
         //* CONDITIONALLY RETURN AN MD5 HASH
         this.md5    = (str) => (/^[a-f0-9]{32}$/gm.test(str)) ? str : CryptoJS.MD5(str).toString();
+        this.md5ify = (str) => Promise.resolve( app.md5(str) );
 
         //BASE64 ENCODE A STRING
         this.base64_encode = (string) => CryptoJS.enc.Base64.stringify( CryptoJS.enc.Utf8.parse(string) );
+        this.base64_encodify    = (string) => Promise.resolve( app.base64_encode( string ) );
+
         //BASE64 DECODE A STRING
         this.base64_decode = (encoded) => (CryptoJS.enc.Base64.parse(encoded)).toString(CryptoJS.enc.Utf8);
+        this.base64_decodify  = (encoded) => Promise.resolve( app.base64_decode(encoded) );
 
         //@ THE OFFICIAL FILE UPLOAD SERVICE
         this.upload = (data, destination) => {
@@ -185,26 +191,46 @@ angular.module('framify.js', [
         //!DATE FORMATERS
         //* date object     
         this.date           = () => new Date();
+
         //* simple date
         this.newDate        = () => new Date().toDateString();
+        this.new_date       = this.newDate;
+
         //* isodate
         this.isoDate        = () => new Date().format('isoDate');
+        this.iso_date       = this.isoDate;
+
         //* get the isoDate of the specified date
         this.getIsoDate     = (d) => new Date(d).format('isoDate');
+        this.get_iso_date   = this.getIsoDate;
+
         //* get the isoDate of a date object
         this.toIsoDate      = dObj => dObj.format('isoDate');
+        this.to_iso_date    = this.toIsoDate;
+
         //* custom datetime
         this.dateTime       = () => new Date().format('dateTime');
+        this.date_time      = this.dateTime;
+
         //* set the date in the custom datetime format
         this.getDateTime    = d => new Date(d).format('dateTime');
+        this.get_date_time  = this.getDateTime;
+
         //* Convert a date to the dd-mm-yyyy hh:mm format
         this.toDateTime     = dObj => dObj.format('dateTime');
+        this.to_date_time   = this.toDateTime;
+
         //* month number
         this.monthNum       = () => new Date().format('monthNum');
+        this.month_num      = this.monthNum;
+
         //* get month number of the specified date
         this.getMonthNum    = d => new Date(d).format('monthNum');
+        this.get_month_num  = this.getMonthNum;
+
         //* get date objects' month number
         this.toMonthNum     = dObj => dObj.format('monthNum');
+        this.to_month_num   = this.toMonthNum;
 
         //* MONTHS ARRAY
         var $month_array = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -550,7 +576,7 @@ angular.module('framify.js', [
 
         };
 
-        //Handle background calls to the web server for database integration
+        //@ Handle background calls to the web server for database integration
         this.db = function(data,destination){
 
              return new Promise( (resolve,reject) => {
@@ -559,6 +585,20 @@ angular.module('framify.js', [
                 $http.get(  destination , {
                         params: data
                 })
+                .success( resolve )
+                .error( reject )
+
+            });
+
+        };
+
+        //@ Handle email sending requests
+        this.mail = function(data,destination){
+
+             return new Promise( (resolve,reject) => {
+
+                destination = ( destination ) ? destination : `${remoteAuth.url}/sendMail`;
+                $http.post( destination ,data )
                 .success( resolve )
                 .error( reject )
 
@@ -828,6 +868,7 @@ function() {
         });
 
     };
+    auth.set_auth   = auth.SetAuth;
 
      //@ Perform User Registration
     auth.Register  = function( credentials ){
@@ -855,9 +896,10 @@ function() {
         });
 
     };
-        
+    auth.register  = auth.Register;
+      
     //@ Perform a User Login
-    auth.Login          = function( credentials ){
+    auth.Login     = function( credentials ){
 
         return new Promise( function( resolve,reject ){
 
@@ -886,9 +928,10 @@ function() {
         });
 
     };
-        
+    auth.login     = auth.Login;    
+
     //@ Perform A User Logout
-    auth.Logout         = function( ){
+    auth.Logout    = function( ){
 
         return new Promise( function(resolve,reject){
 
@@ -899,6 +942,7 @@ function() {
         });                         
 
     };
+    auth.logout    = auth.Logout;   
 
 }])
 
@@ -923,7 +967,9 @@ function() {
 
        })
        
-   }
+   };
+   r_auth.set_url     = r_auth.setUrl;
+
 
    r_auth.SetAuth     = function( AuthToken ){
 
@@ -934,6 +980,7 @@ function() {
         });
 
     };
+    r_auth.set_auth     = r_auth.SetAuth;
 
      //@ Perform User Registration
     r_auth.Register  = function( credentials ){
@@ -961,6 +1008,7 @@ function() {
         });
 
     };
+    r_auth.register     = r_auth.Register;
         
     //@ Perform a User Login
     r_auth.Login          = function( credentials ){
@@ -992,6 +1040,7 @@ function() {
         });
 
     };
+    r_auth.login    = r_auth.Login;
         
     //@ Perform A User Logout
     r_auth.Logout         = function( ){
@@ -1005,6 +1054,7 @@ function() {
         });                         
 
     };
+    r_auth.logout   = r_auth.Logout;
 
 }]) 
 
@@ -1129,6 +1179,7 @@ function() {
             return obj;
 
         };
+        $rootScope.set_var  = $rootScope.setVar;
 
         /**
          * SECURE THE PARENTAL CONTROLLED URLS
@@ -1167,13 +1218,15 @@ function() {
          
         //@ Redirect to a given sub-state in the pre-defined 'app' main state
         $scope.appRedirect = function(partialState){
-	    $state.go("app."+partialState);
-	}
+            $state.go("app."+partialState);
+        }
+        $scope.app_redirect = $scope.appRedirect;
                 
         //@ Redirect to the specified state
         $scope.goTo = function(completeState){
             $state.go(completeState);
         }
+        $scope.go_to    = $scope.goTo;
 
         //@ UNWANTED ANGULAR JS OBJECTS
         $scope.unwanted    = ["$$hashKey","$index"];
@@ -1188,7 +1241,7 @@ function() {
             });
             return insertObj;
         };
-
+        $scope.remove_unwanted  =   $scope.removeUnwanted;
        
         
         //! BASIC ADDITION
@@ -1214,7 +1267,7 @@ function() {
                 }
 
                 //* Perform the actual addition
-                $scope.cgi.ajax($scope.removeUnwanted(data))
+                $scope.app.db($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -1287,7 +1340,7 @@ function() {
                 }
 
                 //* perform the actual update
-                $scope.cgi.ajax($scope.removeUnwanted(data))
+                $scope.app.db($scope.removeUnwanted(data))
                 .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1358,7 +1411,7 @@ function() {
                 }
 
                  //* perform the actual data fetching
-                 $scope.cgi.ajax($scope.removeUnwanted(data))
+                 $scope.app.db($scope.removeUnwanted(data))
                  .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1439,7 +1492,7 @@ function() {
                     });
                 }
 
-                $scope.cgi.ajax($scope.removeUnwanted(data))
+                $scope.app.db($scope.removeUnwanted(data))
                 .then( (r) => {
 
                     r = $scope.app.json(r);
@@ -1488,7 +1541,7 @@ function() {
                 $scope.data.login.extras    = " AND active is true LIMIT 1";
 
                 //* perform the actual login validation
-                $scope.cgi.ajax($scope.removeUnwanted($scope.data.login))
+                $scope.app.db($scope.removeUnwanted($scope.data.login))
                 .then((r) => {
 
                     $scope.data.admin.extras = "";
@@ -1555,7 +1608,7 @@ function() {
                 $scope.data.admin.extras    = " AND active is true LIMIT 1";
 
                 //* perform the actual login
-                $scope.cgi.ajax($scope.removeUnwanted($scope.data.admin) )
+                $scope.app.db($scope.removeUnwanted($scope.data.admin) )
                 .then((r) => {
 
                     $scope.data.admin.extras = "";
@@ -1717,7 +1770,7 @@ function() {
                 }
 
                 //* Perform the actual custom query
-                $scope.cgi.ajax($scope.removeUnwanted(data))
+                $scope.app.db($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -1776,7 +1829,7 @@ function() {
                 }
 
                 //* perform the actual count
-                $scope.cgi.ajax($scope.removeUnwanted(data))
+                $scope.app.db($scope.removeUnwanted(data))
                 .then((r) => {
 
                     r = $scope.app.json(r);
@@ -1841,13 +1894,19 @@ function() {
          */
         $scope.dPush = (obj ,key ,val) => {
             obj[key] = val;
+            return obj;
         };
+        $scope.d_push   = $scope.dPush;
+
+        $scope.dPushify = ( obj, key, val ) => Promise.resolve( $scope.dPush( obj, key, val ) );
+        $scope.d_pushify = $scope.dPushify;
 
         /**
          * @ MONTH REGULATION
          */
         $scope.currmoin = $scope.app.monthNum();
-        $scope.setMoin = (moin) => { $scope.currmoin = moin; }
+        $scope.setMoin = (moin) => { $scope.currmoin = moin; };
+        $scope.set_moin = $scope.setMoin;
 
         //@ DELETE UNWANTED PARAMETERS
         $scope.delParams = function( mainObj,removeKeys ){
@@ -1863,6 +1922,8 @@ function() {
             return mainObj;
 
         };
+        $scope.del_params   = $scope.delParams;
+
 
         //@ INJECT A STANDARD WHERE "Extras" OBJECT
         // addExtras(data.my_services,{username: storage.user.username},'username:WHERE owner','password,name,email,telephone,account_number,entity,active'),' ' )
@@ -1935,6 +1996,124 @@ function() {
             })
 
         };
+        $scope.add_extras   = (targetObj ,extrasObj ,subStrings ,removeKeys) => {
+
+            return new Promise( (resolve,reject) => {
+
+                targetObj   = targetObj || {};
+                extrasObj   = extrasObj || {};
+                subStrings  = subStrings || ['',''];
+                removeKeys  = removeKeys || ['',''];
+
+                var target  = '';
+                var extras  = '';
+
+                var target_k = [],
+                    extras_k = [],
+                    target_v = [],
+                    extras_v = [];
+
+                //@ Ensure that the substitution and removal parameters are arrays 
+                if( !Array.isArray( subStrings ) || !Array.isArray( removeKeys ) ){
+                    reject('This Method only allows substitution and removal Arrays, <br> please consider using the <b><i>addExtras</i></b> object instead.');
+                }else{
+
+                    //@ CAPTURE THE REMOVE KEYS
+                    let target_removeKeys = removeKeys[0].split(',').filter(e => e);
+                    let extras_removeKeys = removeKeys[1].split(',').filter(e => e);
+
+                    //@ Remove specified keys from the target object
+                    target_removeKeys.forEach(e => {
+                        targetObj[e] = null;
+                        delete targetObj[e];
+                    });
+
+                    //@ Remove specified keys from the extras object
+                    extras_removeKeys.forEach(e => {
+                        extrasObj[e] = null;
+                        delete extrasObj[e];
+                    });
+
+
+
+                    //@ CAPTURE REPLACE STRINGS
+                    let target_subStrings = subStrings[0].split(',');
+                    let extras_subStrings = subStrings[1].split(',');
+
+                    //@ Specify target key-value pairs
+                    target_subStrings.forEach((e, i) => {
+                        let x = e.split(':');
+                        target_k[i] = (x[0]);
+                        target_v[i] = (x[1]);
+                    });
+
+                    //@ Specify extras key-value pairs
+                    extras_subStrings.forEach((e, i) => {
+                        let x = e.split(':');
+                        extras_k[i] = (x[0]);
+                        extras_v[i] = (x[1]);
+                    });
+
+                    //@ GET THE DEFINED KEYS
+                    var extras_keys = Object.keys(extrasObj);
+                    var target_keys = Object.keys(targetObj);
+
+                    //@ TARGET - REPLACE THE DEFINED WITH THE DESIRED REPLACE KEYS
+                    target_k.forEach((e, i) => {
+
+                        if (target_keys.indexOf(e) != -1) {
+
+                            // console.log( `Renaming the target ${e} to ${target_v[i]}` )
+
+                            targetObj[target_v[i]] = targetObj[e];
+                            targetObj[e] = null;
+                            delete targetObj[e];
+
+                        }
+
+                    });
+
+                     //@ EXTRAS - REPLACE THE DEFINED WITH THE DESIRED REPLACE KEYS
+                    extras_k.forEach((e, i) => {
+
+                        if (extras_keys.indexOf(e) != -1) {
+
+                            // console.log( `Renaming the extras ${e} to ${extras_v[i]}` )
+
+                            extrasObj[extras_v[i]] = extrasObj[e];
+                            extrasObj[e] = null;
+                            delete extrasObj[e];
+
+                        }
+
+                    });
+
+                    //@ SQLify the extras object
+                    extras_k = null;
+
+                    extras_k = Object.keys(extrasObj);
+                    extras_v = null;
+
+                    extras_k.forEach((e, i) => {
+
+                        var fg = ( !isNaN(extrasObj[e]) ) ? parseInt(extrasObj[e]) : "'" + extrasObj[e] +"'";
+                        extras += ' ' + e + "=" + fg + " AND";
+
+                    });
+
+                    extras_k = null;
+
+                    targetObj.extras = extras.replace(/AND+$/, '');
+
+                    resolve( targetObj );
+
+
+                }
+
+                
+            })
+
+        };
 
         
 
@@ -1961,43 +2140,43 @@ function() {
 	    //@ Count my entities
 	    $scope.howMany = (table,data) => {
 
-		var data        = data || {owner: $scope.storage.user.username};
-		data            = (data)?$scope.app.json(data):{};
-		data.table      = table || 'entities';
-		data.command    = "count";
-		data.token      =  {};
+            var data        = data || {owner: $scope.storage.user.username};
+            data            = (data)?$scope.app.json(data):{};
+            data.table      = table || 'entities';
+            data.command    = "count";
+            data.token      =  {};
 
-		$scope.cgi.ajax( $scope.removeUnwanted(data) )
-		.then( (r) => {   
-		    
-		    r = $scope.app.json(r);
+            $scope.app.db( $scope.removeUnwanted(data) )
+            .then( (r) => {   
+                
+                r = $scope.app.json(r);
 
-		    if(r.response == 200){
+                if(r.response == 200){
 
-		        if( r.data.message ) {
-		            $scope.app.notify((r.data.message), "success");
-		        }
-		        
-		        $scope.counted[data.table.toString().replace(/vw_/ig,'')] = r.data.message;
-		        
-		    }else{
+                    if( r.data.message ) {
+                        $scope.app.notify((r.data.message), "success");
+                    }
+                    
+                    $scope.counted[data.table.toString().replace(/vw_/ig,'')] = r.data.message;
+                    
+                }else{
 
-		        //POSTGRESQL MATCHING
-		        if(Array.isArray(r.data.message)){
-		            var v =  r.data.message[2].match(/DETAIL:(.*)/)
-		            if( v != undefined || v!=null ){
-		                r.data.message = v[1];
-		            }else{
-		                r.data.message = r.data.message[2];
-		            }
-		        }else{
-		            r.data.message;
-		        }
-		    
-		        alert(`<center>${ r.data.message }</center>`);
-		    }           
-		    //$scope.$apply();
-		})    
+                    //POSTGRESQL MATCHING
+                    if(Array.isArray(r.data.message)){
+                        var v =  r.data.message[2].match(/DETAIL:(.*)/)
+                        if( v != undefined || v!=null ){
+                            r.data.message = v[1];
+                        }else{
+                            r.data.message = r.data.message[2];
+                        }
+                    }else{
+                        r.data.message;
+                    }
+                
+                    alert(`<center>${ r.data.message }</center>`);
+                }           
+                //$scope.$apply();
+            })    
 
 
 	    };
@@ -2021,26 +2200,34 @@ function() {
         $scope.app.notify("You have been successfully registered");
         $state.go("app.login");
     };
-    $scope.r_handlers.regSuccess = $scope.handlers.regSuccess;
+    $scope.r_handlers.regSuccess  = $scope.handlers.regSuccess;
+    $scope.handlers.reg_success   = $scope.handlers.regSuccess;
+    $scope.r_handlers.reg_success = $scope.handlers.regSuccess;
 
     //@ The successful login handler
     $scope.handlers.loginSuccess = function( message ){
         $scope.app.notify("<i class='fa fa-2x fa-spin fa-circle-o-notch'></i> Processing your login data",'success',4000); 
         $state.go("app.panel");    
     };
-    $scope.r_handlers.loginSuccess    = $scope.handlers.loginSuccess;
+    $scope.r_handlers.loginSuccess     = $scope.handlers.loginSuccess;
+    $scope.handlers.login_success      = $scope.handlers.loginSuccess;
+    $scope.r_handlers.login_success    = $scope.handlers.loginSuccess;
 
     //@ The registration error handler
     $scope.handlers.regError   = function( message ){
         $scope.app.alert("<font color='red'>Signup Error</font>", message);
     };
     $scope.r_handlers.regError    = $scope.handlers.regError;
+    $scope.handlers.reg_error     = $scope.handlers.regError;
+    $scope.r_handlers.reg_rror    = $scope.handlers.regError;
 
     //@ The login error handler
     $scope.handlers.loginError   = function( message ){
         $scope.app.alert("<font color='red'>Login Error</font>", message);
     };    
     $scope.r_handlers.loginError    = $scope.handlers.loginError;
+    $scope.handlers.login_error     = $scope.handlers.loginError;
+    $scope.r_handlers.login_error   = $scope.handlers.loginError;
  
     //@ The identity check verification handler
     $scope.handlers.identity    = function(){
@@ -2153,6 +2340,7 @@ function() {
         })
 
     };
+    $scope.handlers.is_loged_in = $scope.handlers.isLogedIn;
 
     $scope.r_handlers.isLogedIn   = function(){
 
@@ -2200,6 +2388,7 @@ function() {
         })
 
     };
+    $scope.r_handlers.is_loged_in   = $scope.r_handlers.isLogedIn;
 
 }])
 
