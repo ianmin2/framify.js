@@ -50,7 +50,7 @@ angular.module('framify.js', [
 
         this.setVar     = ( obj, key, val ) => {
 
-            obj         = obj || {};
+            obj         = ( obj ) ? obj : {};
             obj[key]    = val;
             return obj;
 
@@ -376,27 +376,33 @@ angular.module('framify.js', [
 
         //*VALIDATE EMAIL ADDRESSES
         this.isemail = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/;
-        this.isEmail = prospective_email => this.isemail.test(prospective_email);
+        this.isEmail = prospective_email => app.isemail.test(prospective_email);
+        this.is_email   = this.isEmail;
 
         //*VALIDATE USERNAMES
         this.isusername = /^[a-z0-9_-]{4,16}$/;
-        this.isUsername = prospective_username => this.isusername.test(prospective_username);
+        this.isUsername = prospective_username => app.isusername.test(prospective_username);
+        this.is_username    = this.isUsername;
 
         //*VALIDATE PASSWORDS
         this.ispassword = /^[-@./\!\$\%\^|#&,+\w\s]{6,50}$/;
-        this.isPassword = prospective_password => this.ispassword.test(prospective_password);
+        this.isPassword = prospective_password => app.ispassword.test(prospective_password);
+        this.is_password    = this.isPassword;
 
         //* VALIDATE NUMBERS
         this.isnumber = /^-{0,1}\d*\.{0,1}\d+$/;
-        this.isNumber = prospective_number => this.isnumber.test(prospective_number);
+        this.isNumber = prospective_number => app.isnumber.test(prospective_number);
+        this.is_number  = this.isNumber;
 
         //*VALIDATE TELEPHONE NUMBERS
         this.istelephone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
-        this.isTelephone = prospective_telephone => this.istelephone.test(prospective_telephone);
+        this.isTelephone = prospective_telephone => app.istelephone.test(prospective_telephone);
+        this.is_telephone   = this.isTelephone;
 
         //*VALIDATE DATETIME VALUES IN THE FORMAT  DD-MM-YYYY HH:MM e.g 29-02-2013 22:16
         this.isdateTime = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-(19|20)[0-9]{2} (2[0-3]|[0-1][0-9]):[0-5][0-9]$/;
-        this.isDateTime = prospective_date=>this.isdateTime.test( prospective_date );
+        this.isDateTime = prospective_date=>app.isdateTime.test( prospective_date );
+        this.is_date_time   = this.isDateTime;
 
         //*VALIDATE WHETHER TWO GIVEN VALUES MATCH
         this.matches = (val1, val2) => (val1 === val2);
@@ -1418,8 +1424,13 @@ function() {
 
                     if (r.response == 200) {
                         $scope.fetched[table] = r.data.message;
-                        $scope.$apply();
-                        resolve(r);
+                        //@ $scope.$apply();
+                        $scope.app.doNothing()
+                        .then(e=>{
+                             resolve(r);
+                        })
+                        
+                       
                     } else {
 
                         // POSTGRESQL ERROR FORMAT MATCHING
