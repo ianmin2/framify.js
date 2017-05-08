@@ -51,6 +51,14 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
         return obj;
     };
 
+    this.set_var = function (obj, key, val) {
+
+        obj = obj ? obj : {};
+        obj[key] = val;
+
+        return Promise.resolve(obj);
+    };
+
     //* CONDITIONALLY TRANSFORM TO STRING
     this.str = function (obj) {
         return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" ? JSON.stringify(obj) : obj;
@@ -1303,10 +1311,12 @@ angular.module('framify.js', ['ui.router', 'framify-paginate', 'ngStorage', 'jso
 
                 if (r.response == 200) {
                     $scope.fetched[table] = r.data.message;
-                    //@ $scope.$apply();
-                    $scope.app.doNothing().then(function (e) {
-                        resolve(r);
-                    });
+                    $scope.$apply();
+                    // $scope.app.doNothing()
+                    // .then(e=>{
+                    resolve(r);
+                    // })
+
                 } else {
 
                     // POSTGRESQL ERROR FORMAT MATCHING

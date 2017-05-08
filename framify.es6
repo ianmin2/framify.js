@@ -55,6 +55,15 @@ angular.module('framify.js', [
             return obj;
 
         };
+        
+        this.set_var 	= ( obj,key,val ) => {
+        
+	    obj         = ( obj ) ? obj : {};
+            obj[key]    = val;	
+            
+            return Promise.resolve( obj);	
+        
+        };
 
 
         //* CONDITIONALLY TRANSFORM TO STRING
@@ -1433,11 +1442,11 @@ function() {
 
                     if (r.response == 200) {
                         $scope.fetched[table] = r.data.message;
-                        //@ $scope.$apply();
-                        $scope.app.doNothing()
-                        .then(e=>{
+                        $scope.$apply();
+                        // $scope.app.doNothing()
+                        // .then(e=>{
                              resolve(r);
-                        })
+                        // })
                         
                        
                     } else {
